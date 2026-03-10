@@ -36,11 +36,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 80rpx;
   border: 8rpx solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
   position: relative;
   z-index: 1;
+}
+
+.profile-avatar-img {
+  width: 96rpx;
+  height: 96rpx;
 }
 
 .profile-name {
@@ -108,9 +112,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40rpx;
   margin-right: 28rpx;
   flex-shrink: 0;
+}
+
+.menu-icon-img {
+  width: 40rpx;
+  height: 40rpx;
 }
 
 .menu-icon.family {

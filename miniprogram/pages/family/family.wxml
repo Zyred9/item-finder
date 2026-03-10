@@ -3,7 +3,8 @@
   <!-- 已有家庭 -->
   <view wx:if="{{familyInfo}}">
     <view class="family-card">
-      <text class="family-name">🏠 {{familyInfo.name}}</text>
+      <image class="family-icon" src="../../assets/icons/home.svg" mode="aspectFit" />
+      <text class="family-name">{{familyInfo.name}}</text>
       <text class="member-count">{{members.length}} 位成员</text>
     </view>
     
@@ -19,7 +20,9 @@
     <view class="members-section">
       <text class="section-title">家庭成员</text>
       <view class="member-item" wx:for="{{members}}" wx:key="id">
-        <text class="member-avatar">{{item.nickname ? item.nickname[0] : '👤'}}</text>
+        <view class="member-avatar">
+          <image class="member-avatar-img" src="../../assets/icons/user-round.svg" mode="aspectFit" />
+        </view>
         <text class="member-name">{{item.nickname || '未命名'}}</text>
         <text class="member-admin" wx:if="{{item.is_admin}}">管理员</text>
       </view>
@@ -29,7 +32,7 @@
   <!-- 无家庭 -->
   <view wx:else>
     <view class="empty-section">
-      <text class="empty-icon">🏠</text>
+      <image class="empty-icon" src="../../assets/icons/home.svg" mode="aspectFit" />
       <text class="empty-text">你还没有加入家庭</text>
     </view>
     

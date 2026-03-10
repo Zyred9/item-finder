@@ -1,7 +1,7 @@
 <!-- 全部物品列表（分页） -->
 <view class="container">
   <view class="empty-state" wx:if="{{!loading && items.length === 0}}">
-    <text class="empty-icon">📦</text>
+    <image class="empty-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
     <text class="empty-text">还没有物品，去存第一个吧~</text>
   </view>
 
@@ -23,7 +23,9 @@
         src="{{item.photo_path}}"
         mode="aspectFill"
       />
-      <view wx:else class="item-image item-image-placeholder">{{item.icon || '📦'}}</view>
+      <view wx:else class="item-image item-image-placeholder">
+        <image class="item-placeholder-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+      </view>
       <view class="item-info">
         <view class="item-name">{{item.name}}</view>
         <view class="item-location">📍 {{item.location}}</view>

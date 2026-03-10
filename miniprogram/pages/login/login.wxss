@@ -1,6 +1,6 @@
 .container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #FF6B5B 0%, #ff8a7a 100%); padding: 40rpx; }
 .logo-section { text-align: center; margin-bottom: 100rpx; }
-.logo { font-size: 120rpx; }
+.logo-img { width: 120rpx; height: 120rpx; }
 .app-name { display: block; font-size: 48rpx; color: #fff; font-weight: bold; margin-top: 20rpx; }
 .slogan { display: block; font-size: 28rpx; color: rgba(255,255,255,0.8); margin-top: 10rpx; }
 .login-btn {

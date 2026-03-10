@@ -8,7 +8,7 @@ Page({
     userInfo: null,
     familyInfo: null,
     userName: '我',
-    avatarText: '👤',
+    avatarText: '',
     familyName: '',
     roleText: '',
     memberCount: 0,
@@ -34,7 +34,7 @@ Page({
     const app = getApp()
     const globalFamily = (app.globalData && app.globalData.familyInfo) || null
     const userName = (globalFamily && globalFamily.nickname) || '我'
-    const avatarText = userName !== '我' && userName.length > 0 ? userName[0] : '👤'
+    const avatarText = userName !== '我' && userName.length > 0 ? userName[0] : ''
 
     this.setData({ userName: userName || '我', avatarText })
 

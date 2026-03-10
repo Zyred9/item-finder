@@ -33,6 +33,14 @@
   position: relative;
   z-index: 1;
   margin-bottom: 12rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.store-title-icon {
+  width: 40rpx;
+  height: 40rpx;
 }
 
 .store-desc {
@@ -86,7 +94,8 @@
 }
 
 .photo-icon {
-  font-size: 56rpx;
+  width: 72rpx;
+  height: 72rpx;
 }
 
 .photo-text {
@@ -114,6 +123,14 @@
   font-weight: 600;
   color: #1a1a2e;
   margin-bottom: 8rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.voice-card-icon {
+  width: 32rpx;
+  height: 32rpx;
 }
 
 .voice-card-desc {
@@ -320,7 +337,8 @@
 }
 
 .extension-photo-icon {
-  font-size: 48rpx;
+  width: 40rpx;
+  height: 40rpx;
   margin-bottom: 8rpx;
 }
 

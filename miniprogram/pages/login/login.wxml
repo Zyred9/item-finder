@@ -1,7 +1,7 @@
 <!--登录页-->
 <view class="container">
   <view class="logo-section">
-    <text class="logo">📦</text>
+    <image class="logo-img" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
     <text class="app-name">寻物记</text>
     <text class="slogan">存得明白，找得轻松</text>
   </view>

@@ -2,7 +2,10 @@
 <view class="container">
   <!-- 页面头部 -->
   <view class="store-header">
-    <view class="store-title">📦 快速存物</view>
+    <view class="store-title">
+      <image class="store-title-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+      <text>快速存物</text>
+    </view>
     <view class="store-desc">拍照或语音，轻松记录物品位置</view>
   </view>
 
@@ -12,7 +15,7 @@
       <image wx:if="{{formData.photo_path}}" class="photo-preview" src="{{formData.photo_path}}" mode="aspectFill" />
       <view wx:else class="photo-placeholder">
         <view class="photo-icon-wrap">
-          <text class="photo-icon">📷</text>
+          <image class="photo-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
         </view>
         <text class="photo-text">点击拍照或从相册选择</text>
         <text class="photo-hint">添加物品照片，便于日后查找</text>
@@ -23,7 +26,10 @@
   <!-- 语音录入卡片 -->
   <view class="section">
     <view class="voice-card">
-      <view class="voice-card-title">🎤 语音录入</view>
+      <view class="voice-card-title">
+        <image class="voice-card-icon" src="../../assets/icons/mic.svg" mode="aspectFit" />
+        <text>语音录入</text>
+      </view>
       <view class="voice-card-desc">说出「物品名 + 存放位置」自动填充到下方表单</view>
       <button
         class="voice-btn {{isRecording ? 'recording' : ''}}"
@@ -100,11 +106,14 @@
 
       <!-- 方式一：拍照（凭证照）+ OCR 提取文字 -->
       <view class="extension-mode-block">
-        <view class="extension-mode-label">📷 拍照</view>
+        <view class="extension-mode-label">
+          <image class="extension-photo-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
+          <text>拍照</text>
+        </view>
         <view class="extension-photo-wrap" bindtap="onExtensionPhoto">
           <image wx:if="{{extensionPhotoPath}}" class="extension-photo-preview" src="{{extensionPhotoPath}}" mode="aspectFill" />
           <view wx:else class="extension-photo-placeholder">
-            <text class="extension-photo-icon">📷</text>
+            <image class="extension-photo-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
             <text class="extension-photo-text">凭证/说明书等</text>
           </view>
         </view>
@@ -115,7 +124,10 @@
 
       <!-- 方式二：语音补充 -->
       <view class="extension-mode-block">
-        <view class="extension-mode-label">🎤 语音补充</view>
+        <view class="extension-mode-label">
+          <image class="extension-voice-icon" src="../../assets/icons/mic.svg" mode="aspectFit" />
+          <text>语音补充</text>
+        </view>
         <view class="extension-voice-row">
           <button
             class="extension-voice-btn {{isRecordingExtension ? 'recording' : ''}}"

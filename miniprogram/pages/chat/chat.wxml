@@ -19,7 +19,18 @@
     <view class="messages-inner">
       <view class="chat-message {{item.roleClass}}" wx:for="{{messages}}" wx:key="id" id="msg-{{index}}">
         <view class="chat-avatar">
-          <text>{{item.role === 'user' ? '👤' : '🤖'}}</text>
+          <image
+            wx:if="{{item.role === 'assistant'}}"
+            class="chat-avatar-img"
+            src="../../assets/icons/bot.svg"
+            mode="aspectFit"
+          />
+          <image
+            wx:else
+            class="chat-avatar-img"
+            src="../../assets/icons/user-round.svg"
+            mode="aspectFit"
+          />
         </view>
 
         <view class="chat-body">
@@ -85,7 +96,7 @@
 
       <view class="chat-message assistant" wx:if="{{isTyping}}" id="typing-anchor">
         <view class="chat-avatar">
-          <text>🤖</text>
+          <image class="chat-avatar-img" src="../../assets/icons/bot.svg" mode="aspectFit" />
         </view>
         <view class="chat-body">
           <view class="chat-bubble typing-bubble">
@@ -108,11 +119,11 @@
     <view class="chat-voice-result-text">{{voiceResultText}}</view>
   </view>
 
-  <view class="chat-input-area">
+      <view class="chat-input-area">
     <!-- 文字输入模式：语音按钮 + 输入框 + 发送 -->
     <block wx:if="{{inputMode === 'text'}}">
       <view class="chat-voice-btn" bindtap="switchToVoiceMode">
-        <text>🎤</text>
+        <image class="chat-voice-btn-img" src="../../assets/icons/mic.svg" mode="aspectFit" />
       </view>
       <view class="chat-input-wrapper">
         <input

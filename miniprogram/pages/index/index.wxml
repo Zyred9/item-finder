@@ -9,7 +9,7 @@
   <!-- 搜索框：输入确认带词跳找物，点击右侧语音图标直接进找物 -->
   <view class="search-container">
     <view class="search-box">
-      <text class="search-icon">🔍</text>
+      <image class="search-icon" src="../../assets/icons/search.svg" mode="widthFix" />
       <input
         class="search-input"
         placeholder="搜索物品，或试试语音..."
@@ -18,19 +18,25 @@
         bindinput="onSearchInput"
         bindconfirm="onSearch"
       />
-      <view class="search-voice-icon" bindtap="onSearchTap">🎤</view>
+      <view class="search-voice-icon" bindtap="onSearchTap">
+        <image class="search-voice-icon-img" src="../../assets/icons/mic.svg" mode="aspectFit" />
+      </view>
     </view>
   </view>
 
   <!-- 快捷入口 -->
   <view class="quick-actions">
     <view class="quick-action store" bindtap="onStoreItem">
-      <view class="action-icon">📦</view>
+      <view class="action-icon">
+        <image class="action-icon-img" src="../../assets/icons/camera.svg" mode="aspectFit" />
+      </view>
       <text class="action-label">快速存物</text>
       <text class="action-desc">拍照 + 语音录入</text>
     </view>
     <view class="quick-action chat" bindtap="onFindItem">
-      <view class="action-icon">💬</view>
+      <view class="action-icon">
+        <image class="action-icon-img" src="../../assets/icons/messages-square.svg" mode="aspectFit" />
+      </view>
       <text class="action-label">对话找物</text>
       <text class="action-desc">AI 智能搜索</text>
     </view>
@@ -40,7 +46,7 @@
   <view class="section" wx:if="{{reminders.length > 0}}">
     <view class="section-header">
       <view class="section-title">
-        <text>⚠️ 智能提醒</text>
+        <text>智能提醒</text>
         <text class="badge">{{reminders.length}}</text>
       </view>
       <text class="section-more" bindtap="onViewAllReminders">查看全部 ›</text>
@@ -67,7 +73,7 @@
   <view class="section">
     <view class="section-header">
       <view class="section-title">
-        <text>🕐 最近存放</text>
+        <text>最近存放</text>
       </view>
       <text class="section-more" bindtap="onViewAllItems">全部 ›</text>
     </view>
@@ -79,7 +85,9 @@
     <view class="item-list">
       <view class="item-card" wx:for="{{recentItems}}" wx:key="id" bindtap="onItemClick" data-id="{{item.id}}">
         <image wx:if="{{item.photo_path}}" class="item-image" src="{{item.photo_path}}" mode="aspectFill" />
-        <view wx:else class="item-image item-image-placeholder">{{item.icon || '📦'}}</view>
+        <view wx:else class="item-image item-image-placeholder">
+          <image class="item-placeholder-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+        </view>
         <view class="item-info">
           <view class="item-name">{{item.name}}</view>
           <view class="item-location">📍 {{item.location}}</view>
