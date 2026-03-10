@@ -1,0 +1,49 @@
+<!--家庭管理页-->
+<view class="container">
+  <!-- 已有家庭 -->
+  <view wx:if="{{familyInfo}}">
+    <view class="family-card">
+      <text class="family-name">🏠 {{familyInfo.name}}</text>
+      <text class="member-count">{{members.length}} 位成员</text>
+    </view>
+    
+    <view class="invite-section">
+      <text class="section-title">邀请家人</text>
+      <view class="invite-code">
+        <text class="code">{{inviteCode}}</text>
+        <text class="copy-btn" bindtap="onCopyCode">复制</text>
+      </view>
+      <text class="hint">分享邀请码给家人，让他们加入你的家庭</text>
+    </view>
+    
+    <view class="members-section">
+      <text class="section-title">家庭成员</text>
+      <view class="member-item" wx:for="{{members}}" wx:key="id">
+        <text class="member-avatar">{{item.nickname ? item.nickname[0] : '👤'}}</text>
+        <text class="member-name">{{item.nickname || '未命名'}}</text>
+        <text class="member-admin" wx:if="{{item.is_admin}}">管理员</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 无家庭 -->
+  <view wx:else>
+    <view class="empty-section">
+      <text class="empty-icon">🏠</text>
+      <text class="empty-text">你还没有加入家庭</text>
+    </view>
+    
+    <view class="action-section">
+      <button class="btn-primary" bindtap="onCreateFamily">创建家庭</button>
+      
+      <view class="divider">
+        <text>或者</text>
+      </view>
+      
+      <view class="join-section">
+        <input class="code-input" placeholder="输入6位邀请码" maxlength="6" value="{{inputCode}}" bindinput="onInputCode" />
+        <button class="btn-secondary" bindtap="onJoinFamily">加入家庭</button>
+      </view>
+    </view>
+  </view>
+</view>

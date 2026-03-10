@@ -1,0 +1,107 @@
+/* 全部物品列表 - 与首页卡片风格一致 */
+.container {
+  min-height: 100vh;
+  background: #fafafa;
+  padding: 32rpx 40rpx 120rpx;
+  box-sizing: border-box;
+}
+
+.loading-wrap {
+  padding: 80rpx 0;
+  text-align: center;
+  font-size: 28rpx;
+  color: #999;
+}
+
+.empty-state {
+  padding: 120rpx 0;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 96rpx;
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24rpx;
+}
+
+.item-card {
+  display: flex;
+  align-items: center;
+  padding: 28rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.item-image {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 24rpx;
+  flex-shrink: 0;
+  margin-right: 28rpx;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.item-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56rpx;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.item-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 8rpx;
+  word-break: break-word;
+}
+
+.item-location {
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 12rpx;
+  word-break: break-word;
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.item-meta .dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: #ff6b5b;
+  margin: 0 16rpx;
+}
+
+.load-more {
+  padding: 32rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: #999;
+}

@@ -1,0 +1,98 @@
+<!-- 我的页面 - 对齐设计原型 v3 -->
+<view class="container">
+  <view class="profile-header">
+    <view class="profile-avatar">{{avatarText}}</view>
+    <view class="profile-name">{{userName}}</view>
+    <view class="profile-family" wx:if="{{familyName}}">
+      <text class="profile-badge">{{familyName}}</text>
+      <text class="profile-role">{{roleText}}</text>
+    </view>
+  </view>
+
+  <view class="profile-menu">
+    <view class="menu-group">
+      <view class="menu-item" bindtap="onManageFamily">
+        <view class="menu-icon family">👨‍👩‍👧</view>
+        <view class="menu-content">
+          <view class="menu-label">家庭管理</view>
+          <view class="menu-desc">创建或切换家庭</view>
+        </view>
+        <view class="menu-right">
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+      <view class="menu-item" bindtap="onManageFamily">
+        <view class="menu-icon family">👥</view>
+        <view class="menu-content">
+          <view class="menu-label">成员管理</view>
+          <view class="menu-desc">邀请和管理家庭成员</view>
+        </view>
+        <view class="menu-right">
+          <text class="menu-badge" wx:if="{{memberCount > 0}}">{{memberCount}} 人</text>
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="menu-group">
+      <view class="menu-item" bindtap="onViewReminders">
+        <view class="menu-icon notification">🔔</view>
+        <view class="menu-content">
+          <view class="menu-label">提醒设置</view>
+          <view class="menu-desc">过期、保修、证件提醒</view>
+        </view>
+        <view class="menu-right">
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+      <view class="menu-item" bindtap="onPrivacy">
+        <view class="menu-icon privacy">🔒</view>
+        <view class="menu-content">
+          <view class="menu-label">隐私设置</view>
+          <view class="menu-desc">数据安全和隐私保护</view>
+        </view>
+        <view class="menu-right">
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="menu-group">
+      <view class="menu-item" bindtap="onStats">
+        <view class="menu-icon stats">📊</view>
+        <view class="menu-content">
+          <view class="menu-label">物品统计</view>
+          <view class="menu-desc">查看物品数据和报告</view>
+        </view>
+        <view class="menu-right">
+          <text class="menu-badge" wx:if="{{stats.itemCount > 0}}">{{stats.itemCount}} 件</text>
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+      <view class="menu-item" bindtap="onHelp">
+        <view class="menu-icon help">❓</view>
+        <view class="menu-content">
+          <view class="menu-label">帮助与反馈</view>
+          <view class="menu-desc">常见问题和使用指南</view>
+        </view>
+        <view class="menu-right">
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+      <view class="menu-item" bindtap="onAbout">
+        <view class="menu-icon about">ℹ️</view>
+        <view class="menu-content">
+          <view class="menu-label">关于我们</view>
+          <view class="menu-desc">版本 v1.0.0</view>
+        </view>
+        <view class="menu-right">
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <button class="logout-btn" bindtap="onLogout">🚪 退出登录</button>
+
+    <view class="profile-footer">寻物记 · 存得明白，找得轻松</view>
+  </view>
+</view>

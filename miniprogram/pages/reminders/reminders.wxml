@@ -1,0 +1,27 @@
+<!--提醒列表页-->
+<view class="container">
+  <view wx:if="{{reminders.length === 0 && !loading}}" class="empty">
+    <text class="empty-icon">✅</text>
+    <text class="empty-text">暂无待处理提醒</text>
+  </view>
+  
+  <view class="reminder-list">
+    <view class="reminder-card {{item.level}}" wx:for="{{reminders}}" wx:key="id">
+      <view class="reminder-header">
+        <text class="reminder-title">{{item.title}}</text>
+        <text class="reminder-level">{{item.level === 'urgent' ? '紧急' : item.level === 'warning' ? '待处理' : '一般'}}</text>
+      </view>
+      <view class="reminder-body">
+        <text class="reminder-content">{{item.content}}</text>
+        <view class="reminder-item" wx:if="{{item.item_name}}">
+          <text>{{item.item_name}} - {{item.item_location}}</text>
+        </view>
+      </view>
+      <view class="reminder-actions">
+        <text class="action-btn" data-id="{{item.id}}" data-action="done" bindtap="onHandle">处理</text>
+        <text class="action-btn" data-id="{{item.id}}" data-action="defer" bindtap="onHandle">延期</text>
+        <text class="action-btn ignore" data-id="{{item.id}}" data-action="ignore" bindtap="onHandle">忽略</text>
+      </view>
+    </view>
+  </view>
+</view>

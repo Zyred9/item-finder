@@ -1,0 +1,12 @@
+<!--登录页-->
+<view class="container">
+  <view class="logo-section">
+    <text class="logo">📦</text>
+    <text class="app-name">寻物记</text>
+    <text class="slogan">存得明白，找得轻松</text>
+  </view>
+  
+  <button class="login-btn" loading="{{loading}}" bindtap="onLogin">
+    微信一键登录
+  </button>
+</view>

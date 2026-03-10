@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寻物记 Item Finder v3.0</title>
+    <style>
+        :root {
+            --primary: #FF6B5B;
+            --primary-light: #FF8E72;
+            --primary-dark: #E55A4A;
+            --secondary: #00B894;
+            --secondary-light: #55EFC4;
+            --secondary-dark: #00A383;
+            --success: #4ECDC4;
+            --warning: #FFB347;
+            --danger: #FF6B6B;
+            --text-primary: #1a1a2e;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --bg-light: #FAFAFA;
+            --bg-white: #ffffff;
+            --border: #e8e8e8;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .phone {
+            width: 375px;
+            height: 812px;
+            background: var(--bg-light);
+            border-radius: 44px;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.4), inset 0 0 0 8px #2a2a3e;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .phone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            height: 32px;
+            background: #2a2a3e;
+            border-radius: 0 0 20px 20px;
+            z-index: 1000;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: var(--bg-white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            position: relative;
+            z-index: 100;
+        }
+
+        .screen {
+            height: calc(100% - 44px - 83px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 20px;
+        }
+
+        .screen::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .screen::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 2px;
+        }
+
+        .tab-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 83px;
+            background: var(--bg-white);
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-item:hover {
+            background: #f5f5f5;
+        }
+
+        .tab-item.active {
+            color: var(--secondary);
+        }
+
+        .tab-icon {
+            font-size: 26px;
+            transition: transform 0.2s;
+        }
+
+        .tab-item:hover .tab-icon {
+            transform: scale(1.1);
+        }
+
+        .tab-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .tab-item.active .tab-label {
+            color: var(--secondary);
+        }
+
+        .tab-item[data-page="profile"].active {
+            color: #FF8E72;
+        }
+
+        .tab-item[data-page="profile"].active .tab-label {
+            color: #FF8E72;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* ===== 首页样式 ===== */
+        .home-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 24px 20px 40px;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .home-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .home-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+
+        .home-greeting {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .home-title {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .search-container {
+            padding: 0 20px;
+            margin-top: -20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-box {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .search-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(255,107,91,0.25);
+        }
+
+        .search-box .icon {
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+        .search-box .placeholder {
+            flex: 1;
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .search-box .voice-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            padding: 20px;
+        }
+
+        .quick-action {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .quick-action:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .quick-action:hover::before {
+            opacity: 1;
+        }
+
+        .quick-action.store .action-icon {
+            background: linear-gradient(135deg, #FFF5F4, #FFE8E3);
+        }
+
+        .quick-action.chat .action-icon {
+            background: linear-gradient(135deg, #E8F9F5, #D0F0E5);
+        }
+
+        .action-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            transition: transform 0.3s;
+        }
+
+        .quick-action:hover .action-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .action-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .action-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .section {
+            padding: 0 20px;
+            margin-top: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .badge {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .section-more {
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+
+        .section-more:hover {
+            color: var(--primary);
+        }
+
+        .reminder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .reminder-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reminder-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+        }
+
+        .reminder-card.urgent::before {
+            background: linear-gradient(180deg, var(--danger), #FF8E8E);
+        }
+
+        .reminder-card.warning::before {
+            background: linear-gradient(180deg, var(--warning), #FFD48E);
+        }
+
+        .reminder-card.normal::before {
+            background: linear-gradient(180deg, var(--success), #8EE4DC);
+        }
+
+        .reminder-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .reminder-card.urgent {
+            background: linear-gradient(135deg, #FFF5F5 0%, var(--bg-white) 100%);
+        }
+
+        .reminder-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .reminder-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: rgba(255,255,255,0.8);
+        }
+
+        .reminder-title {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .reminder-time {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .reminder-card.urgent .reminder-time {
+            background: linear-gradient(135deg, var(--danger), #FF8E8E);
+            color: #fff;
+        }
+
+        .reminder-card.warning .reminder-time {
+            background: linear-gradient(135deg, var(--warning), #FFD48E);
+            color: #fff;
+        }
+
+        .reminder-card.normal .reminder-time {
+            background: linear-gradient(135deg, var(--success), #8EE4DC);
+            color: #fff;
+        }
+
+        .reminder-content {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .reminder-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .reminder-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .reminder-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+        }
+
+        .reminder-btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255,107,91,0.4);
+        }
+
+        .reminder-btn.secondary {
+            background: #f5f5f5;
+            color: var(--text-secondary);
+        }
+
+        .reminder-btn.secondary:hover {
+            background: #eee;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item-card {
+            background: var(--bg-white);
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            gap: 14px;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .item-card:hover {
+            transform: translateX(6px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .item-image {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-image::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent);
+        }
+
+        .item-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .item-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .item-location {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .item-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .item-meta .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        /* ===== 存物页样式 ===== */
+        .store-container {
+            padding: 20px;
+        }
+
+        .upload-section {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .photo-upload {
+            width: 100%;
+            height: 140px;
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #fafafa, #f5f5f5);
+        }
+
+        .photo-upload:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #FFF5F4, #FFEFEA);
+        }
+
+        .photo-upload .icon {
+            font-size: 40px;
+            opacity: 0.6;
+            transition: transform 0.3s;
+        }
+
+        .photo-upload:hover .icon {
+            transform: scale(1.1);
+        }
+
+        .photo-upload .text {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .voice-section {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            border-radius: 16px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        .voice-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .voice-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .voice-btn:active {
+            transform: scale(0.95);
+        }
+
+        .voice-info {
+            flex: 1;
+        }
+
+        .voice-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .voice-desc {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .form-section {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-label .required {
+            color: var(--danger);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(255,107,91,0.1);
+        }
+
+        .form-textarea {
+            min-height: 90px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .category-select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            background: #fafafa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .category-select:hover {
+            border-color: var(--primary);
+        }
+
+        .category-select.active {
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        .expand-section {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+            display: none;
+        }
+
+        .expand-section.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .expand-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .expand-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .expand-badge {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            color: #fff;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .save-button {
+            width: calc(100% - 40px);
+            margin: 0 20px 100px;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(255,107,91,0.35);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .save-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .save-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(255,107,91,0.45);
+        }
+
+        .save-button:hover::before {
+            left: 100%;
+        }
+
+        .save-button:active {
+            transform: translateY(0);
+        }
+
+        /* ===== 找物页样式 ===== */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chat-message.ai .chat-avatar {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        }
+
+        .chat-message.user .chat-avatar {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+        }
+
+        .chat-bubble {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.6;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chat-message.ai .chat-bubble {
+            background: var(--bg-white);
+            color: var(--text-primary);
+            border-bottom-left-radius: 6px;
+        }
+
+        .chat-message.user .chat-bubble {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            color: #fff;
+            border-bottom-right-radius: 6px;
+        }
+
+        .chat-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .suggestion-chip {
+            background: linear-gradient(135deg, #FFF5F4, #FFEFEA);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .suggestion-chip:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .search-result {
+            background: var(--bg-white);
+            border-radius: 14px;
+            margin-top: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-result-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: #fafafa;
+        }
+
+        .search-result-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .search-result-location {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .search-result-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .result-action-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .result-action-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+        }
+
+        .result-action-btn.secondary {
+            background: #f5f5f5;
+            color: var(--text-secondary);
+        }
+
+        .result-action-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .chat-input-area {
+            position: absolute;
+            bottom: 83px;
+            left: 0;
+            right: 0;
+            background: var(--bg-white);
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: #f5f5f5;
+            border-radius: 24px;
+            padding: 4px 4px 4px 16px;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            padding: 10px 0;
+            outline: none;
+        }
+
+        .chat-voice-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-voice-btn:hover {
+            background: #e5e5e5;
+        }
+
+        .chat-send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: all 0.2s;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255,107,91,0.4);
+        }
+
+        /* ===== 我的页样式 ===== */
+        .profile-header {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            padding: 30px 20px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-avatar {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: #fff;
+            margin: 0 auto 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            box-shadow: var(--shadow-md);
+        }
+
+        .profile-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .profile-family {
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .profile-family .badge {
+            background: rgba(255,255,255,0.25);
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .profile-menu {
+            padding: 20px;
+        }
+
+        .menu-group {
+            background: var(--bg-white);
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: #fafafa;
+        }
+
+        .menu-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 14px;
+            flex-shrink: 0;
+        }
+
+        .menu-icon.family { background: linear-gradient(135deg, #FFF5F4, #FFE8E3); }
+        .menu-icon.notification { background: linear-gradient(135deg, #E8F9F5, #D0F0E5); }
+        .menu-icon.privacy { background: linear-gradient(135deg, #F0F7FF, #E0EFFF); }
+        .menu-icon.help { background: linear-gradient(135deg, #F0FFF7, #E0FFEB); }
+        .menu-icon.about { background: linear-gradient(135deg, #FFF9F0, #FFF0E0); }
+        .menu-icon.stats { background: linear-gradient(135deg, #FFF0F5, #FFE0EA); }
+
+        .menu-content {
+            flex: 1;
+        }
+
+        .menu-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .menu-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .menu-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-badge {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .menu-arrow {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .logout-btn {
+            width: calc(100% - 40px);
+            margin: 20px;
+            padding: 16px;
+            background: #fff;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* 分类选择弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--bg-white);
+            width: 100%;
+            max-width: 375px;
+            border-radius: 24px 24px 0 0;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .category-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 8px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .category-item:hover {
+            background: linear-gradient(135deg, #FFF5F4, #FFEFEA);
+            transform: translateY(-2px);
+        }
+
+        .category-item.selected {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+        }
+
+        .category-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .category-label {
+            font-size: 12px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            width: calc(100% - 40px);
+            margin: 0 20px 24px;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            z-index: 3000;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+        </div>
+        
+        <div class="screen">
+            <!-- ===== 首页 ===== -->
+            <div class="page active" id="page-home">
+                <div class="home-header">
+                    <div class="home-greeting">早上好 👋</div>
+                    <div class="home-title">张家</div>
+                </div>
+
+                <div class="search-container">
+                    <div class="search-box" onclick="switchTab('chat')">
+                        <span class="icon">🔍</span>
+                        <span class="placeholder">搜索物品，或试试语音...</span>
+                        <span class="voice-icon">🎤</span>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="quick-action store" onclick="switchTab('store')">
+                        <div class="action-icon">📦</div>
+                        <span class="action-label">快速存物</span>
+                        <span class="action-desc">拍照 + 语音录入</span>
+                    </div>
+                    <div class="quick-action chat" onclick="switchTab('chat')">
+                        <div class="action-icon">💬</div>
+                        <span class="action-label">对话找物</span>
+                        <span class="action-desc">AI 智能搜索</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            ⚠️ 智能提醒
+                            <span class="badge">3</span>
+                        </div>
+                        <div class="section-more">查看全部 ›</div>
+                    </div>
+
+                    <div class="reminder-list">
+                        <div class="reminder-card urgent">
+                            <div class="reminder-header">
+                                <div class="reminder-icon">💊</div>
+                                <span class="reminder-title">999 感冒灵</span>
+                                <span class="reminder-time">3 天</span>
+                            </div>
+                            <div class="reminder-content">
+                                📍 药箱上层 · 2026-03-06 过期
+                            </div>
+                            <div class="reminder-actions">
+                                <button class="reminder-btn primary" onclick="handleReminder(this)">✅ 已处理</button>
+                                <button class="reminder-btn secondary">⏰ 延期</button>
+                            </div>
+                        </div>
+
+                        <div class="reminder-card warning">
+                            <div class="reminder-header">
+                                <div class="reminder-icon">🥛</div>
+                                <span class="reminder-title">蒙牛酸奶</span>
+                                <span class="reminder-time">1 天</span>
+                            </div>
+                            <div class="reminder-content">
+                                📍 冰箱冷藏 · 2026-03-04 过期
+                            </div>
+                            <div class="reminder-actions">
+                                <button class="reminder-btn primary" onclick="handleReminder(this)">✅ 已处理</button>
+                                <button class="reminder-btn secondary">❌ 忽略</button>
+                            </div>
+                        </div>
+
+                        <div class="reminder-card normal">
+                            <div class="reminder-header">
+                                <div class="reminder-icon">📄</div>
+                                <span class="reminder-title">护照</span>
+                                <span class="reminder-time">5 个月</span>
+                            </div>
+                            <div class="reminder-content">
+                                📍 保险柜第二层 · 有效期不足 6 个月
+                            </div>
+                            <div class="reminder-actions">
+                                <button class="reminder-btn primary">👁️ 查看</button>
+                                <button class="reminder-btn secondary">❌ 忽略</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">🕐 最近存放</div>
+                        <div class="section-more">全部 ›</div>
+                    </div>
+
+                    <div class="item-list">
+                        <div class="item-card">
+                            <div class="item-image">🔌</div>
+                            <div class="item-info">
+                                <div class="item-name">戴森吹风机</div>
+                                <div class="item-location">📍 主卧抽屉</div>
+                                <div class="item-meta">
+                                    <span>张三</span>
+                                    <span class="dot"></span>
+                                    <span>今天 10:30</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-image">📄</div>
+                            <div class="item-info">
+                                <div class="item-name">护照</div>
+                                <div class="item-location">📍 保险柜第二层</div>
+                                <div class="item-meta">
+                                    <span>李四</span>
+                                    <span class="dot"></span>
+                                    <span>昨天</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-image">💊</div>
+                            <div class="item-info">
+                                <div class="item-name">感冒药</div>
+                                <div class="item-location">📍 药箱上层</div>
+                                <div class="item-meta">
+                                    <span>张三</span>
+                                    <span class="dot"></span>
+                                    <span>2 月 28 日</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-image">🔧</div>
+                            <div class="item-info">
+                                <div class="item-name">博世电钻</div>
+                                <div class="item-location">📍 阳台工具柜</div>
+                                <div class="item-meta">
+                                    <span>张三</span>
+                                    <span class="dot"></span>
+                                    <span>2 月 25 日</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="item-card">
+                            <div class="item-image">👟</div>
+                            <div class="item-info">
+                                <div class="item-name">运动鞋</div>
+                                <div class="item-location">📍 玄关鞋柜</div>
+                                <div class="item-meta">
+                                    <span>李四</span>
+                                    <span class="dot"></span>
+                                    <span>2 月 20 日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 存物页 ===== -->
+            <div class="page" id="page-store">
+                <div class="store-container">
+                    <div class="upload-section">
+                        <div class="photo-upload" onclick="showToast('📷 打开相机/相册')">
+                            <span class="icon">📷</span>
+                            <span class="text">拍照或从相册选择</span>
+                        </div>
+                    </div>
+
+                    <div class="voice-section">
+                        <button class="voice-btn" onclick="showToast('🎤 正在录音...')">🎤</button>
+                        <div class="voice-info">
+                            <div class="voice-title">按住说话</div>
+                            <div class="voice-desc">AI 自动识别并填充表单</div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label class="form-label">
+                                物品名 <span class="required">●</span>
+                            </label>
+                            <input type="text" class="form-input" placeholder="例如：感冒药、吹风机、护照" value="戴森吹风机">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                存放位置 <span class="required">●</span>
+                            </label>
+                            <input type="text" class="form-input" placeholder="例如：主卧抽屉、药箱上层" value="主卧抽屉">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">物品分类</label>
+                            <div class="category-select" onclick="openCategoryModal()">
+                                <span id="selected-category">🔌 电器数码</span>
+                                <span>›</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">描述</label>
+                            <textarea class="form-input form-textarea" placeholder="补充描述物品的特征、品牌、颜色等">红色，HD03 型号，配 3 个风嘴</textarea>
+                        </div>
+                    </div>
+
+                    <div class="expand-section show" id="expand-fields">
+                        <div class="expand-header">
+                            <span class="expand-title">📋 扩展信息</span>
+                            <span class="expand-badge">电器类</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">品牌</label>
+                            <input type="text" class="form-input" placeholder="例如：戴森、飞利浦" value="Dyson 戴森">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">型号</label>
+                            <input type="text" class="form-input" placeholder="例如：HD03" value="HD03">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">购买日期</label>
+                            <input type="date" class="form-input" value="2024-06-15">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">保修期至</label>
+                            <input type="date" class="form-input" value="2026-06-15">
+                        </div>
+                    </div>
+
+                    <button class="save-button" onclick="showSaveSuccess()">
+                        💾 保存物品
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== 找物页 ===== -->
+            <div class="page" id="page-chat">
+                <div class="chat-container">
+                    <div class="chat-messages">
+                        <div class="chat-message ai">
+                            <div class="chat-avatar">🤖</div>
+                            <div class="chat-bubble">
+                                你好呀！我是寻物记助手 👋<br><br>
+                                帮我找东西超简单，试试这样说：
+                                <div class="chat-suggestions">
+                                    <span class="suggestion-chip" onclick="sendSuggestion('我的护照在哪？')">我的护照在哪？</span>
+                                    <span class="suggestion-chip" onclick="sendSuggestion('感冒药放哪了？')">感冒药放哪了？</span>
+                                    <span class="suggestion-chip" onclick="sendSuggestion('主卧抽屉有什么？')">主卧抽屉有什么？</span>
+                                    <span class="suggestion-chip" onclick="sendSuggestion('有什么快过期了？')">有什么快过期了？</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-message user">
+                            <div class="chat-avatar">👤</div>
+                            <div class="chat-bubble">
+                                我的护照在哪？
+                            </div>
+                        </div>
+
+                        <div class="chat-message ai">
+                            <div class="chat-avatar">🤖</div>
+                            <div class="chat-bubble">
+                                📄 找到啦！
+                                <div class="search-result">
+                                    <div class="search-result-item">
+                                        <div class="search-result-name">
+                                            📄 中国护照
+                                        </div>
+                                        <div class="search-result-location">
+                                            📍 保险柜第二层
+                                        </div>
+                                        <div class="search-result-meta">
+                                            李四 · 3 月 1 日存放
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="result-actions">
+                                    <button class="result-action-btn primary" onclick="showToast('📍 打开导航')">📍 导航过去</button>
+                                    <button class="result-action-btn secondary" onclick="showToast('📷 查看照片')">📷 看照片</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-message user">
+                            <div class="chat-avatar">👤</div>
+                            <div class="chat-bubble">
+                                那吹风机呢？
+                            </div>
+                        </div>
+
+                        <div class="chat-message ai">
+                            <div class="chat-avatar">🤖</div>
+                            <div class="chat-bubble">
+                                🔌 找到 2 个吹风机哦：
+                                <div class="search-result">
+                                    <div class="search-result-item">
+                                        <div class="search-result-name">
+                                            🔌 戴森吹风机
+                                        </div>
+                                        <div class="search-result-location">
+                                            📍 主卧抽屉
+                                        </div>
+                                        <div class="search-result-meta">
+                                            张三 · 3 月 1 日 · 红色 HD03
+                                        </div>
+                                    </div>
+                                    <div class="search-result-item">
+                                        <div class="search-result-name">
+                                            🔌 飞利浦吹风机
+                                        </div>
+                                        <div class="search-result-location">
+                                            📍 卫生间柜子
+                                        </div>
+                                        <div class="search-result-meta">
+                                            李四 · 2 月 20 日 · 白色
+                                        </div>
+                                    </div>
+                                </div>
+                                你要找哪个呢？
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <button class="chat-voice-btn" onclick="showToast('🎤 语音输入')">🎤</button>
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="chat-input" placeholder="描述你要找的东西..." onkeypress="handleKeyPress(event)">
+                    </div>
+                    <button class="chat-send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+
+            <!-- ===== 我的页 ===== -->
+            <div class="page" id="page-profile">
+                <div class="profile-header">
+                    <div class="profile-avatar">👩</div>
+                    <div class="profile-name">小红</div>
+                    <div class="profile-family">
+                        <span class="badge">张家</span>
+                        <span>· 管理员</span>
+                    </div>
+                </div>
+
+                <div class="profile-menu">
+                    <div class="menu-group">
+                        <div class="menu-item">
+                            <div class="menu-icon family">👨‍👩‍👧</div>
+                            <div class="menu-content">
+                                <div class="menu-label">家庭管理</div>
+                                <div class="menu-desc">创建或切换家庭</div>
+                            </div>
+                            <div class="menu-right">
+                                <span class="menu-arrow">›</span>
+                            </div>
+                        </div>
+                        <div class="menu-item">
+                            <div class="menu-icon family">👥</div>
+                            <div class="menu-content">
+                                <div class="menu-label">成员管理</div>
+                                <div class="menu-desc">邀请和管理家庭成员</div>
+                            </div>
+                            <div class="menu-right">
+                                <span class="menu-badge">3 人</span>
+                                <span class="menu-arrow">›</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="menu-group">
+                        <div class="menu-item">
+                            <div class="menu-icon notification">🔔</div>
+                            <div class="menu-content">
+                                <div class="menu-label">提醒设置</div>
+                                <div class="menu-desc">过期、保修、证件提醒</div>
+                            </div>
+                            <div class="menu-right">
+                                <span class="menu-arrow">›</span>
+                            </div>
+                        </div>
+                        <div class="menu-item">
+                            <div class="menu-icon privacy">🔒</div>
+                            <div class="menu-content">
+                                <div class="menu-label">隐私设置</div>
+                                <div class="menu-desc">数据安全和隐私保护</div>
+                            </div>
+                            <div class="menu-right">
+                                <span class="menu-arrow">›</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="menu-group">
+                        <div class="menu-item">
+                            <div class="menu-icon stats">📊</div>
+                            <div class="menu-content">
+                                <div class="menu-label">物品统计</div>
+                                <div class="menu-desc">查看物品数据和报告</div>
+                            </div>
+                            <div class="menu-right">
+                                <span class="menu-badge">128 件</span>
+                                <span class="menu-arrow">›</span>
+                            </div>
+                        </div>
+                        <div class="menu-item">
+                            <div class="menu-icon help">❓</div>
+                            <div class="menu-content">
+                                <div class="menu-label">帮助与反馈</div>
+                                <div class="menu-desc">常见问题和使用指南</div>
+                            </div>
+                            <div class="menu-right">
+                                <span class="menu-arrow">›</span>
+                            </div>
+                        </div>
+                        <div class="menu-item">
+                            <div class="menu-icon about">ℹ️</div>
+                            <div class="menu-content">
+                                <div class="menu-label">关于我们</div>
+                                <div class="menu-desc">版本 v3.0.0</div>
+                            </div>
+                            <div class="menu-right">
+                                <span class="menu-arrow">›</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="logout-btn" onclick="showToast('🚪 退出登录')">🚪 退出登录</button>
+
+                    <div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">
+                        寻物记 v3.0 · 存得明白，找得轻松
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航 -->
+        <div class="tab-bar">
+            <div class="tab-item active" data-page="home" onclick="switchTab('home')">
+                <span class="tab-icon">🏠</span>
+                <span class="tab-label">首页</span>
+            </div>
+            <div class="tab-item" data-page="store" onclick="switchTab('store')">
+                <span class="tab-icon">📦</span>
+                <span class="tab-label">存物</span>
+            </div>
+            <div class="tab-item" data-page="chat" onclick="switchTab('chat')">
+                <span class="tab-icon">💬</span>
+                <span class="tab-label">找物</span>
+            </div>
+            <div class="tab-item" data-page="profile" onclick="switchTab('profile')">
+                <span class="tab-icon">👤</span>
+                <span class="tab-label">我的</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分类选择弹窗 -->
+    <div class="modal-overlay" id="category-modal" onclick="closeCategoryModal(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">选择物品分类</div>
+            </div>
+            <div class="modal-body">
+                <div class="category-grid">
+                    <div class="category-item" onclick="selectCategory('🏠 家居用品')">
+                        <span class="category-icon">🏠</span>
+                        <span class="category-label">家居用品</span>
+                    </div>
+                    <div class="category-item" onclick="selectCategory('🔌 电器数码')">
+                        <span class="category-icon">🔌</span>
+                        <span class="category-label">电器数码</span>
+                    </div>
+                    <div class="category-item" onclick="selectCategory('💊 药品健康')">
+                        <span class="category-icon">💊</span>
+                        <span class="category-label">药品健康</span>
+                    </div>
+                    <div class="category-item" onclick="selectCategory('🍔 食品饮料')">
+                        <span class="category-icon">🍔</span>
+                        <span class="category-label">食品饮料</span>
+                    </div>
+                    <div class="category-item" onclick="selectCategory('📄 证件文件')">
+                        <span class="category-icon">📄</span>
+                        <span class="category-label">证件文件</span>
+                    </div>
+                    <div class="category-item" onclick="selectCategory('👕 服饰鞋包')">
+                        <span class="category-icon">👕</span>
+                        <span class="category-label">服饰鞋包</span>
+                    </div>
+                    <div class="category-item" onclick="selectCategory('🧸 母婴用品')">
+                        <span class="category-icon">🧸</span>
+                        <span class="category-label">母婴用品</span>
+                    </div>
+                    <div class="category-item" onclick="selectCategory('📦 其他')">
+                        <span class="category-icon">📦</span>
+                        <span class="category-label">其他</span>
+                    </div>
+                </div>
+            </div>
+            <button class="modal-close" onclick="closeCategoryModal()">完成</button>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Tab 切换
+        function switchTab(tabId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 显示目标页面
+            document.getElementById('page-' + tabId).classList.add('active');
+            
+            // 更新 Tab 状态
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('onclick').includes(tabId)) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // 滚动到顶部
+            document.querySelector('.screen').scrollTop = 0;
+        }
+
+        // 分类选择弹窗
+        function openCategoryModal() {
+            document.getElementById('category-modal').classList.add('active');
+        }
+
+        function closeCategoryModal(event) {
+            if (!event || event.target.id === 'category-modal' || event.target.classList.contains('modal-close')) {
+                document.getElementById('category-modal').classList.remove('active');
+            }
+        }
+
+        function selectCategory(category) {
+            document.getElementById('selected-category').textContent = category;
+            document.querySelector('.category-select').classList.add('active');
+            
+            // 显示扩展字段
+            const expandSection = document.getElementById('expand-fields');
+            if (category === '🔌 电器数码' || category === '💊 药品健康' || category === '📄 证件文件') {
+                expandSection.classList.add('show');
+            } else {
+                expandSection.classList.remove('show');
+            }
+            
+            closeCategoryModal();
+            showToast('已选择：' + category);
+        }
+
+        // 保存成功
+        function showSaveSuccess() {
+            const btn = document.querySelector('.save-button');
+            const originalText = btn.textContent;
+            btn.textContent = '✅ 保存成功！';
+            btn.style.background = 'linear-gradient(135deg, #4ECDC4, #44D9CE)';
+            
+            showToast('物品已保存');
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '';
+            }, 2000);
+        }
+
+        // 处理提醒
+        function handleReminder(btn) {
+            const card = btn.closest('.reminder-card');
+            card.style.opacity = '0.5';
+            btn.textContent = '✓ 已处理';
+            showToast('提醒已处理');
+        }
+
+        // 建议芯片点击
+        function sendSuggestion(text) {
+            document.getElementById('chat-input').value = text;
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (text) {
+                showToast('发送：' + text);
+                input.value = '';
+            }
+        }
+
+        // 回车发送
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Toast 提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 建议芯片点击事件
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                sendSuggestion(this.textContent);
+            });
+        });
+    </script>
+</body>
+</html>

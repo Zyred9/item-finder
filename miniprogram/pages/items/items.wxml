@@ -1,0 +1,44 @@
+<!-- 全部物品列表（分页） -->
+<view class="container">
+  <view class="empty-state" wx:if="{{!loading && items.length === 0}}">
+    <text class="empty-icon">📦</text>
+    <text class="empty-text">还没有物品，去存第一个吧~</text>
+  </view>
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <view class="item-list" wx:if="{{!loading && items.length > 0}}">
+    <view
+      class="item-card"
+      wx:for="{{items}}"
+      wx:key="id"
+      bindtap="onItemTap"
+      data-id="{{item.id}}"
+    >
+      <image
+        wx:if="{{item.photo_path}}"
+        class="item-image"
+        src="{{item.photo_path}}"
+        mode="aspectFill"
+      />
+      <view wx:else class="item-image item-image-placeholder">{{item.icon || '📦'}}</view>
+      <view class="item-info">
+        <view class="item-name">{{item.name}}</view>
+        <view class="item-location">📍 {{item.location}}</view>
+        <view class="item-meta">
+          <text>{{item.creator_name || '我'}}</text>
+          <text class="dot"></text>
+          <text>{{item.created_at}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="load-more" wx:if="{{!loading && items.length > 0}}">
+    <text wx:if="{{loadingMore}}">加载中...</text>
+    <text wx:elif="{{!hasMore}}">已加载全部 {{total}} 件</text>
+    <text wx:else>上拉加载更多</text>
+  </view>
+</view>

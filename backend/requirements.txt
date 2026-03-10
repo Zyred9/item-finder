@@ -1,0 +1,29 @@
+# 寻物记后端依赖
+
+# Web 框架
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# 数据库
+sqlalchemy>=2.0.25
+pymysql>=1.1.0
+cryptography>=41.0.0
+
+# 数据验证
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+
+# 文件上传
+python-multipart>=0.0.9
+aiofiles>=23.2.1
+
+# HTTP 客户端（DeepSeek 等）
+httpx>=0.27.0
+
+# 语音转 wav（可选，用于 ASR 兜底，需系统安装 ffmpeg）
+pydub>=0.25.1
+silk-python>=0.2.8
+
+# 文件上传（兼容旧环境，保持版本一致）
+python-multipart>=0.0.9
+aiofiles==23.2.1

@@ -1,0 +1,54 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/store/store",
+    "pages/chat/chat",
+    "pages/detail/detail",
+    "pages/family/family",
+    "pages/items/items",
+    "pages/reminders/reminders",
+    "pages/profile/profile",
+    "pages/login/login"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FF6B5B",
+    "navigationBarTitleText": "寻物记",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#FF6B5B",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/icons/home.png",
+        "selectedIconPath": "images/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/store/store",
+        "text": "存物",
+        "iconPath": "images/icons/store.png",
+        "selectedIconPath": "images/icons/store-active.png"
+      },
+      {
+        "pagePath": "pages/chat/chat",
+        "text": "找物",
+        "iconPath": "images/icons/chat.png",
+        "selectedIconPath": "images/icons/chat-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "images/icons/profile.png",
+        "selectedIconPath": "images/icons/profile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

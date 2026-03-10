@@ -1,0 +1,153 @@
+<!-- 对话找物页面 - 参考设计原型 v3 -->
+<view class="chat-container">
+  <!-- 顶部栏：标题 + 压缩总结 / 清空 -->
+  <view class="chat-header">
+    <view class="chat-header-title">对话找物</view>
+    <view class="chat-header-actions">
+      <view class="chat-header-btn" bindtap="onSummarize">
+        <text class="chat-header-btn-icon">📋</text>
+        <text class="chat-header-btn-text">压缩总结</text>
+      </view>
+      <view class="chat-header-btn chat-header-clear" bindtap="onClear">
+        <text class="chat-header-clear-icon">🗑️</text>
+        <text class="chat-header-clear-text">清空</text>
+      </view>
+    </view>
+  </view>
+
+  <scroll-view class="chat-messages" scroll-y scroll-into-view="{{scrollToView}}" scroll-with-animation>
+    <view class="messages-inner">
+      <view class="chat-message {{item.roleClass}}" wx:for="{{messages}}" wx:key="id" id="msg-{{index}}">
+        <view class="chat-avatar">
+          <text>{{item.role === 'user' ? '👤' : '🤖'}}</text>
+        </view>
+
+        <view class="chat-body">
+          <view class="chat-bubble">
+            <text class="bubble-text">{{item.content}}</text>
+
+            <view class="chat-suggestions" wx:if="{{item.suggestions && item.suggestions.length > 0}}">
+              <view
+                class="suggestion-chip"
+                wx:for="{{item.suggestions}}"
+                wx:for-item="sug"
+                wx:key="*this"
+                bindtap="onSuggestionTap"
+                data-text="{{sug}}"
+              >
+                {{sug}}
+              </view>
+            </view>
+
+            <view class="search-result" wx:if="{{item.matchedItems && item.matchedItems.length > 0}}">
+              <view class="search-result-header">
+                <text class="search-result-title">匹配结果</text>
+                <text class="search-result-count">{{item.matchedItems.length}} 件</text>
+              </view>
+
+              <view
+                class="search-result-item"
+                wx:for="{{item.matchedItems}}"
+                wx:for-item="mi"
+                wx:key="id"
+                bindtap="onItemClick"
+                data-id="{{mi.id}}"
+              >
+                <view class="result-icon">{{mi.icon || '📦'}}</view>
+                <view class="result-info">
+                  <view class="result-name-row">
+                    <view class="result-name">{{mi.name}}</view>
+                  </view>
+                  <view class="result-location">📍 {{mi.location}}</view>
+                  <view class="result-meta" wx:if="{{mi.creator_name || mi.created_at}}">
+                    {{mi.creator_name || '我'}} · {{mi.created_at}}
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view class="result-actions" wx:if="{{item.actions && item.actions.length > 0}}">
+              <view
+                class="result-action-btn {{action.variant === 'primary' ? 'primary' : 'secondary'}}"
+                wx:for="{{item.actions}}"
+                wx:for-item="action"
+                wx:key="type"
+                bindtap="onActionClick"
+                data-type="{{action.type}}"
+              >
+                <text class="action-icon">{{action.icon}}</text>
+                <text>{{action.label}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="chat-message assistant" wx:if="{{isTyping}}" id="typing-anchor">
+        <view class="chat-avatar">
+          <text>🤖</text>
+        </view>
+        <view class="chat-body">
+          <view class="chat-bubble typing-bubble">
+            <view class="typing-dots">
+              <view class="dot"></view>
+              <view class="dot"></view>
+              <view class="dot"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="messages-bottom-space"></view>
+    </view>
+  </scroll-view>
+
+  <!-- 语音识别结果展示（与输入区统一风格） -->
+  <view class="chat-voice-result-bar" wx:if="{{showVoiceResult && voiceResultText}}">
+    <view class="chat-voice-result-label">识别结果</view>
+    <view class="chat-voice-result-text">{{voiceResultText}}</view>
+  </view>
+
+  <view class="chat-input-area">
+    <!-- 文字输入模式：语音按钮 + 输入框 + 发送 -->
+    <block wx:if="{{inputMode === 'text'}}">
+      <view class="chat-voice-btn" bindtap="switchToVoiceMode">
+        <text>🎤</text>
+      </view>
+      <view class="chat-input-wrapper">
+        <input
+          class="chat-input"
+          placeholder="描述你要找的东西..."
+          placeholder-class="chat-input-placeholder"
+          value="{{inputText}}"
+          bindinput="onInput"
+          bindconfirm="sendMessage"
+          confirm-type="send"
+        />
+      </view>
+      <view class="chat-send-btn" bindtap="sendMessage">
+        <text>➤</text>
+      </view>
+    </block>
+
+    <!-- 语音输入模式：键盘切回 + 按住说话（长按录音，松开发送） -->
+    <block wx:else>
+      <view class="chat-voice-mode-area">
+        <view class="chat-voice-mode-wrap">
+          <view class="chat-keyboard-btn" bindtap="switchToTextMode">
+            <text>⌨️</text>
+          </view>
+          <view
+            class="chat-hold-to-talk {{isRecording ? 'recording' : ''}}"
+            bindtouchstart="onStartRecord"
+            bindtouchend="onStopRecord"
+            bindtouchcancel="onCancelRecord"
+          >
+            <text>{{isRecording ? '松开 发送' : '按住 说话'}}</text>
+          </view>
+        </view>
+        <view class="chat-voice-hint">长按录音，松开发送 · 可说「钥匙在哪」「主卧抽屉有什么」</view>
+      </view>
+    </block>
+  </view>
+</view>

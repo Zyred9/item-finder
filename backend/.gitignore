@@ -1,0 +1,19 @@
+# 环境配置（含敏感信息，勿提交）
+.env
+.env.local
+.env.*.local
+
+# 保留示例与生产模板（可提交）
+# .env.example
+# .env.production
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+uploads/
+*.log
+.venv/
+venv/
