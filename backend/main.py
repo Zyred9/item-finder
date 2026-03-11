@@ -11,8 +11,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from config.settings import settings
 from models import init_db
 from api import (
-    auth_router, families_router, items_router,
-    categories_router, reminders_router, chat_router, debug_router
+    auth_router,
+    families_router,
+    items_router,
+    categories_router,
+    reminders_router,
+    chat_router,
+    debug_router,
+    users_router,
 )
 
 # 创建应用
@@ -44,6 +50,7 @@ app.include_router(categories_router, prefix="/api")
 app.include_router(reminders_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(debug_router, prefix="/api")
+app.include_router(users_router, prefix="/api")
 
 
 @app.middleware("http")

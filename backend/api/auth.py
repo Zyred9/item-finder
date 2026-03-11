@@ -9,6 +9,7 @@ from models import get_db, User
 from schemas import Response
 from schemas.user import LoginRequest, LoginResponse
 from services import UserService, FamilyService
+from config.settings import settings
 
 router = APIRouter(prefix="/auth", tags=["认证"])
 
@@ -21,15 +22,21 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     - 前端传入微信登录 code
     - 后端换取 openid 并返回用户信息
     """
-    # TODO: 实际调用微信 API 换取 openid
-    # 开发环境：用固定 openid 模拟（避免每次 code 不同导致创建新用户）
-    # 生产环境：调用微信 API jscode2session
-    if request.code.startswith("mock_"):
-        # 如果前端传入的是 mock_xxx 格式，直接用后面的部分作为 openid
+    # TODO: 生产环境调用微信 jscode2session 用 code 换 openid，实现「一个微信账号 = 一个用户」。
+    #
+    # 开发阶段：用 openid 绑定用户。清空缓存后前端会发固定 code，后端也映射到同一 openid，
+    # 这样不会每次变成新用户、也不会再要求填邀请码。
+    if settings.DEBUG:
+        # 开发环境：统一映射到固定调试账号（不依赖 code 是否被清空）
+        openid = "dev_user_fixed"
+    elif request.code == "mock_dev_fixed_user":
+        # 前端清空缓存后发固定 code，与 DEBUG 下账号一致，避免重新填邀请码
+        openid = "dev_user_fixed"
+    elif request.code.startswith("mock_"):
+        # 其他 mock_xxx：用 code 本身当 openid（历史兼容）
         openid = request.code
     else:
-        # 真实微信登录时，code 是临时的，需要调用微信 API 换取真正的 openid
-        # 这里暂时用 code 的哈希模拟固定用户（开发测试用）
+        # 真实微信 code：生产应调 jscode2session；此处用哈希占位
         openid = f"dev_user_{hashlib.md5(request.code.encode()).hexdigest()[:8]}"
     
     # 查找用户

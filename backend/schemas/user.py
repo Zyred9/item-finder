@@ -18,6 +18,7 @@ class UserUpdate(BaseModel):
     """更新用户"""
     nickname: Optional[str] = Field(None, max_length=50)
     avatar_url: Optional[str] = Field(None, max_length=500)
+    remark: Optional[str] = Field(None, max_length=100, description="家庭内备注名")
 
 
 class UserResponse(BaseModel):
@@ -28,6 +29,7 @@ class UserResponse(BaseModel):
     nickname: Optional[str]
     avatar_url: Optional[str]
     is_admin: bool
+    remark: Optional[str] = None
     created_at: datetime
     
     class Config:

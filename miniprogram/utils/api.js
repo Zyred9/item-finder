@@ -101,6 +101,9 @@ module.exports = {
   getFamily: (familyId) => request(`/families/${familyId}`),
   getFamilyMembers: (familyId) => request(`/families/${familyId}/members`),
 
+  // ========== 用户 ==========
+  updateUserRemark: (userId, remark) => request(`/users/${userId}`, 'PATCH', { remark }),
+
   // ========== 物品 ==========
   createItem: (data) => {
     const userId = getUserId()

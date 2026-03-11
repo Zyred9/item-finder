@@ -8,7 +8,9 @@ Page({
     familyInfo: null,
     members: [],
     inviteCode: '',
-    inputCode: ''
+    inputCode: '',
+    currentUserId: '',
+    editingRemarkUserId: ''
   },
 
   onShow() {
@@ -24,14 +26,80 @@ Page({
         api.getFamily(familyId),
         api.getFamilyMembers(familyId)
       ])
-      
-      this.setData({ 
-        familyInfo: family, 
-        members,
-        inviteCode: family.invite_code
+      const currentUserId = api.getUserId()
+      this.setData({
+        familyInfo: family,
+        members: members || [],
+        inviteCode: family.invite_code,
+        currentUserId: currentUserId || '',
+        editingRemarkUserId: ''
       })
     } catch (err) {
       console.error('加载失败', err)
+    }
+  },
+
+  async onRemarkEditTap(e) {
+    const userId = e.currentTarget.dataset.userId
+    if (!userId) {
+      return
+    }
+    this.setData({ editingRemarkUserId: userId })
+  },
+
+  onRemarkInput(e) {
+    const userId = e.currentTarget.dataset.userId
+    const value = e.detail.value
+    if (!userId) {
+      return
+    }
+    const members = (this.data.members || []).map((m) => {
+      if (m.id === userId) {
+        return { ...m, _tempRemark: value }
+      }
+      return m
+    })
+    this.setData({ members })
+  },
+
+  async onRemarkBlur(e) {
+    const userId = e.currentTarget.dataset.userId
+    let value = (e.detail.value || '').trim()
+    if (!userId) {
+      this.setData({ editingRemarkUserId: '' })
+      return
+    }
+    const members = this.data.members || []
+    const target = members.find((m) => m.id === userId)
+    if (!target) {
+      this.setData({ editingRemarkUserId: '' })
+      return
+    }
+    if (value.length > 6) {
+      value = value.slice(0, 6)
+      wx.showToast({ title: '备注最多6个字', icon: 'none' })
+    }
+    const original = (target.remark || target.nickname || '').trim()
+    if (value === original) {
+      this.setData({ editingRemarkUserId: '' })
+      return
+    }
+    try {
+      await api.updateUserRemark(userId, value)
+      const updated = members.map((m) => {
+        if (m.id === userId) {
+          return { ...m, remark: value, _tempRemark: undefined }
+        }
+        return m
+      })
+      this.setData({
+        members: updated,
+        editingRemarkUserId: ''
+      })
+      wx.showToast({ title: '备注已更新', icon: 'success' })
+    } catch (err) {
+      wx.showToast({ title: '更新失败', icon: 'none' })
+      this.loadData()
     }
   },
 

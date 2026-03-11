@@ -94,15 +94,19 @@ async def get_family_members(
 ):
     """获取家庭成员"""
     members = FamilyService.get_members(db, family_id)
-    
-    return Response(data=[
-        UserResponse(
-            id=m.id,
-            family_id=m.family_id,
-            wechat_openid=m.wechat_openid,
-            nickname=m.nickname,
-            avatar_url=m.avatar_url,
-            is_admin=m.is_admin,
-            created_at=m.created_at
-        ) for m in members
-    ])
+
+    return Response(
+        data=[
+            UserResponse(
+                id=m.id,
+                family_id=m.family_id,
+                wechat_openid=m.wechat_openid,
+                nickname=m.nickname,
+                avatar_url=m.avatar_url,
+                is_admin=m.is_admin,
+                created_at=m.created_at,
+                remark=getattr(m, "remark", None),
+            )
+            for m in members
+        ]
+    )

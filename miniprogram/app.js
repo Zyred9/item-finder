@@ -29,20 +29,17 @@ App({
 
   /**
    * 登录
-   * 开发环境：返回存储的固定 openid（如果没有则生成一个）
-   * 生产环境：调用 wx.login() 获取 code
+   * 开发环境：使用固定身份，避免「清空缓存后」每次变成新用户、被要求重新填邀请码。
+   * 生产环境：应调用 wx.login() 获取 code，后端用 jscode2session 换 openid。
    */
   async login() {
     return new Promise((resolve, reject) => {
-      // 开发环境：使用固定的 mock openid
-      let mockOpenid = wx.getStorageSync('mockOpenid')
-      if (!mockOpenid) {
-        // 生成一个固定的 mock openid
-        mockOpenid = 'mock_' + this.generateUUID()
+      // 优先用本地缓存的 mockOpenid；清空缓存后没有则用固定常量，保证同一设备始终对应同一用户
+      const STORED = wx.getStorageSync('mockOpenid')
+      const mockOpenid = STORED || 'mock_dev_fixed_user'
+      if (!STORED) {
         wx.setStorageSync('mockOpenid', mockOpenid)
       }
-      
-      // 返回 mock openid 作为 code（后端会识别 mock_ 前缀）
       resolve(mockOpenid)
     })
   },

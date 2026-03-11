@@ -18,6 +18,7 @@ class User(Base):
                        nullable=True, comment="家庭ID")
     wechat_openid = Column(String(64), unique=True, nullable=False, comment="微信OpenID")
     nickname = Column(String(50), comment="昵称")
+    remark = Column(String(100), nullable=True, comment="家庭内备注名")
     avatar_url = Column(String(500), comment="头像URL")
     is_admin = Column(Boolean, default=False, comment="是否管理员")
     created_at = Column(DateTime, default=datetime.now, comment="加入时间")

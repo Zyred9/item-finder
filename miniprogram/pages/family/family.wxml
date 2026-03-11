@@ -23,8 +23,30 @@
         <view class="member-avatar">
           <image class="member-avatar-img" src="../../assets/icons/user-round.svg" mode="aspectFit" />
         </view>
-        <text class="member-name">{{item.nickname || '未命名'}}</text>
-        <text class="member-admin" wx:if="{{item.is_admin}}">管理员</text>
+        <view class="member-content">
+          <input
+            wx:if="{{editingRemarkUserId === item.id}}"
+            class="member-name-input"
+            value="{{item._tempRemark || item.remark || item.nickname || ''}}"
+            placeholder="填写备注（最多6个字）"
+            maxlength="6"
+            focus="true"
+            bindinput="onRemarkInput"
+            bindblur="onRemarkBlur"
+            data-user-id="{{item.id}}"
+          />
+          <view wx:else class="member-name-display">
+            <text class="member-name">
+              {{item.remark || item.nickname || '未命名'}}
+            </text>
+            <text wx:if="{{item.is_admin}}" class="member-admin-inline">管理员</text>
+          </view>
+        </view>
+        <text
+          class="edit-icon"
+          bindtap="onRemarkEditTap"
+          data-user-id="{{item.id}}"
+        >✎</text>
       </view>
     </view>
   </view>

@@ -14,8 +14,44 @@
 .member-item:last-child { border-bottom: none; }
 .member-avatar { width: 60rpx; height: 60rpx; background: #f0f0f0; border-radius: 50%; margin-right: 16rpx; display: flex; align-items: center; justify-content: center; }
 .member-avatar-img { width: 40rpx; height: 40rpx; }
-.member-name { flex: 1; font-size: 30rpx; }
-.member-admin { font-size: 24rpx; color: #FF6B5B; }
+.member-content {
+  flex: 1;
+  min-width: 0;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+}
+.member-name-display {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+.member-name {
+  font-size: 30rpx;
+  color: #333;
+}
+.member-name-input {
+  flex: 1;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 30rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background-color: #f7f7f8;
+  border: 1rpx solid #e3e3e6;
+  box-sizing: border-box;
+}
+.member-admin-inline { font-size: 22rpx; color: #FF6B5B; }
+.edit-icon {
+  margin-left: 16rpx;
+  font-size: 28rpx;
+  color: #FF6B5B;
+}
+.edit-icon-disabled {
+  color: #ccc;
+}
 .empty-section { text-align: center; padding: 100rpx 0; }
 .empty-icon { width: 100rpx; height: 100rpx; }
 .empty-text { display: block; font-size: 30rpx; color: #999; margin-top: 20rpx; }
