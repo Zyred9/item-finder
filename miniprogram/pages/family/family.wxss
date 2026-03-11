@@ -10,9 +10,25 @@
 .copy-btn { padding: 10rpx 20rpx; background: #FF6B5B; color: #fff; border-radius: 8rpx; font-size: 26rpx; }
 .hint { display: block; font-size: 24rpx; color: #999; margin-top: 16rpx; }
 .members-section { background: #fff; border-radius: 16rpx; padding: 30rpx; margin-top: 20rpx; }
-.member-item { display: flex; align-items: center; padding: 20rpx 0; border-bottom: 1rpx solid #f0f0f0; }
+.member-item {
+  display: flex;
+  align-items: center;
+  min-height: 100rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
 .member-item:last-child { border-bottom: none; }
-.member-avatar { width: 60rpx; height: 60rpx; background: #f0f0f0; border-radius: 50%; margin-right: 16rpx; display: flex; align-items: center; justify-content: center; }
+.member-avatar {
+  flex-shrink: 0;
+  width: 60rpx;
+  height: 60rpx;
+  background: #f0f0f0;
+  border-radius: 50%;
+  margin-right: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .member-avatar-img { width: 40rpx; height: 40rpx; }
 .member-content {
   flex: 1;
@@ -24,12 +40,15 @@
 .member-name-display {
   flex: 1;
   min-width: 0;
+  height: 60rpx;
   display: flex;
   align-items: center;
   gap: 8rpx;
 }
 .member-name {
+  display: block;
   font-size: 30rpx;
+  line-height: 0rpx;
   color: #333;
 }
 .member-name-input {
@@ -43,8 +62,19 @@
   border: 1rpx solid #e3e3e6;
   box-sizing: border-box;
 }
-.member-admin-inline { font-size: 22rpx; color: #FF6B5B; }
+.member-admin-inline {
+  display: inline-flex;
+  align-items: center;
+  height: 36rpx;
+  padding: 0 10rpx;
+  border-radius: 18rpx;
+  background: rgba(255, 107, 91, 0.12);
+  font-size: 20rpx;
+  line-height: 1;
+  color: #FF6B5B;
+}
 .edit-icon {
+  flex-shrink: 0;
   margin-left: 16rpx;
   font-size: 28rpx;
   color: #FF6B5B;
