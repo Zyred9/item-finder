@@ -59,7 +59,7 @@ class ItemCreate(BaseModel):
     location: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=500)
     photo_path: Optional[str] = None
-    category_id: Optional[str] = None
+    category_id: Optional[int] = None
     extension: Optional[ItemExtensionCreate] = None
 
 
@@ -69,21 +69,21 @@ class ItemUpdate(BaseModel):
     location: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=500)
     photo_path: Optional[str] = None
-    category_id: Optional[str] = None
+    category_id: Optional[int] = None
     extension: Optional[ItemExtensionCreate] = None
 
 
 class ItemResponse(BaseModel):
     """物品响应"""
-    id: str
-    family_id: str
-    creator_id: str
+    id: int
+    family_id: int
+    creator_id: int
     creator_name: Optional[str] = None
     name: str
     location: str
     description: Optional[str]
     photo_path: Optional[str]
-    category_id: Optional[str]
+    category_id: Optional[int] = None
     category_name: Optional[str] = None
     status: str = "active"
     is_favorite: bool = False
@@ -105,5 +105,5 @@ class ItemListResponse(BaseModel):
 class ItemSearchRequest(BaseModel):
     """搜索请求"""
     q: str = Field(..., min_length=1)
-    family_id: str
+    family_id: int
     limit: int = Field(20, ge=1, le=100)

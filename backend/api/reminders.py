@@ -13,32 +13,35 @@ from services import ReminderService
 router = APIRouter(prefix="/reminders", tags=["智能提醒"])
 
 
-def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> str:
-    """获取当前用户ID"""
+def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> int:
+    """获取当前用户ID（整型）"""
     if not user_id:
         raise HTTPException(status_code=401, detail="未登录")
-    return user_id
+    try:
+        return int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="无效的用户ID")
 
 
 @router.get("", response_model=Response[ReminderListResponse])
 async def get_reminders(
-    family_id: str,
+    family_id: int,
     status: Optional[str] = None,
     level: Optional[str] = None,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取提醒列表"""
     reminders, counts = ReminderService.get_by_family(
         db, family_id, status=status, level=level
     )
-    
+
     result = []
     for r in reminders:
         result.append(ReminderResponse(
-            id=r.id,
-            family_id=r.family_id,
-            item_id=r.item_id,
+            id=int(r.id),
+            family_id=int(r.family_id),
+            item_id=int(r.item_id),
             type=r.type,
             level=r.level,
             title=r.title,
@@ -64,23 +67,23 @@ async def get_reminders(
 
 @router.put("/{reminder_id}", response_model=Response[ReminderResponse])
 async def handle_reminder(
-    reminder_id: str,
+    reminder_id: int,
     request: ReminderHandleRequest,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """处理提醒"""
     reminder = ReminderService.handle(
         db, reminder_id, request.action, request.defer_days
     )
-    
+
     if not reminder:
         raise HTTPException(status_code=404, detail="提醒不存在")
-    
+
     return Response(data=ReminderResponse(
-        id=reminder.id,
-        family_id=reminder.family_id,
-        item_id=reminder.item_id,
+        id=int(reminder.id),
+        family_id=int(reminder.family_id),
+        item_id=int(reminder.item_id),
         type=reminder.type,
         level=reminder.level,
         title=reminder.title,

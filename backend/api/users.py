@@ -1,3 +1,4 @@
+
 """
 用户相关 API
 """
@@ -15,29 +16,30 @@ from services import UserService
 router = APIRouter(prefix="/users", tags=["用户"])
 
 
-def get_current_user_id(x_user_id: Optional[str] = Header(None, alias="X-User-Id")) -> str:
-    """获取当前用户ID（从请求头 X-User-Id 获取）"""
+def get_current_user_id(x_user_id: Optional[str] = Header(None, alias="X-User-Id")) -> int:
+    """获取当前用户ID（从请求头 X-User-Id 获取，整型）"""
     if not x_user_id:
         raise HTTPException(status_code=401, detail="未登录")
-    return x_user_id
+    try:
+        return int(x_user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="无效的用户ID")
 
 
 @router.patch("/{user_id}", response_model=Response[UserResponse])
 async def update_user(
-    user_id: str,
+    user_id: int,
     request: UserUpdate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
     更新用户信息（家庭内部任意成员可编辑任意成员备注）
     """
-    # 当前登录用户
     current_user = db.query(User).filter(User.id == current_user_id).first()
     if not current_user:
         raise HTTPException(status_code=404, detail="当前用户不存在")
 
-    # 目标用户
     target_user = db.query(User).filter(User.id == user_id).first()
     if not target_user:
         raise HTTPException(status_code=404, detail="用户不存在")
@@ -60,8 +62,8 @@ async def update_user(
 
     return Response(
         data=UserResponse(
-            id=user.id,
-            family_id=user.family_id,
+            id=int(user.id),
+            family_id=int(user.family_id) if user.family_id else None,
             wechat_openid=user.wechat_openid,
             nickname=user.nickname,
             avatar_url=user.avatar_url,

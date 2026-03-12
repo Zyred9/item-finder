@@ -11,7 +11,7 @@ class UserService:
     """用户业务逻辑"""
     
     @staticmethod
-    def create(db: Session, wechat_openid: str, family_id: str, 
+    def create(db: Session, wechat_openid: str, family_id: Optional[int] = None, 
                nickname: Optional[str] = None, avatar_url: Optional[str] = None) -> User:
         """创建用户"""
         # 检查是否已存在
@@ -20,7 +20,7 @@ class UserService:
             return existing
         
         # 判断是否是家庭第一个成员（自动设为管理员）
-        is_first = db.query(User).filter(User.family_id == family_id).count() == 0
+        is_first = (family_id is None) or db.query(User).filter(User.family_id == family_id).count() == 0
         
         user = User(
             wechat_openid=wechat_openid,
@@ -36,7 +36,7 @@ class UserService:
         return user
     
     @staticmethod
-    def get_by_id(db: Session, user_id: str) -> Optional[User]:
+    def get_by_id(db: Session, user_id: int) -> Optional[User]:
         """获取用户"""
         return db.query(User).filter(User.id == user_id).first()
     
@@ -46,7 +46,7 @@ class UserService:
         return db.query(User).filter(User.wechat_openid == openid).first()
     
     @staticmethod
-    def update(db: Session, user_id: str, **kwargs) -> Optional[User]:
+    def update(db: Session, user_id: int, **kwargs) -> Optional[User]:
         """更新用户信息"""
         user = UserService.get_by_id(db, user_id)
         if not user:
@@ -61,7 +61,7 @@ class UserService:
         return user
     
     @staticmethod
-    def get_family_info(db: Session, user_id: str) -> Optional[dict]:
+    def get_family_info(db: Session, user_id: int) -> Optional[dict]:
         """获取用户所属家庭信息"""
         user = UserService.get_by_id(db, user_id)
         if not user or not user.family_id:
@@ -72,7 +72,7 @@ class UserService:
             return None
         
         return {
-            "family_id": family.id,
+            "family_id": int(family.id),
             "family_name": family.name,
             "is_admin": user.is_admin
         }

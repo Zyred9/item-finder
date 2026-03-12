@@ -11,7 +11,7 @@ class UserCreate(BaseModel):
     wechat_openid: str = Field(..., description="微信OpenID")
     nickname: Optional[str] = Field(None, max_length=50)
     avatar_url: Optional[str] = Field(None, max_length=500)
-    family_id: str
+    family_id: Optional[int] = None
 
 
 class UserUpdate(BaseModel):
@@ -23,8 +23,8 @@ class UserUpdate(BaseModel):
 
 class UserResponse(BaseModel):
     """用户响应"""
-    id: str
-    family_id: str
+    id: int
+    family_id: Optional[int] = None
     wechat_openid: str
     nickname: Optional[str]
     avatar_url: Optional[str]
@@ -43,10 +43,10 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     """登录响应"""
-    user_id: Optional[str] = None
+    user_id: Optional[int] = None
     nickname: Optional[str] = None
     avatar_url: Optional[str] = None
-    family_id: Optional[str] = None
+    family_id: Optional[int] = None
     family_name: Optional[str] = None
     token: Optional[str] = None
     openid: Optional[str] = None  # 新用户时返回

@@ -19,10 +19,10 @@ class ExtensionFieldConfig(BaseModel):
 
 class CategoryResponse(BaseModel):
     """分类响应"""
-    id: str
+    id: int
     name: str
     icon: Optional[str]
-    parent_id: Optional[str]
+    parent_id: Optional[int] = None
     sort_order: int = 0
     extension_fields: Optional[List[ExtensionFieldConfig]] = None
     created_at: datetime
@@ -33,7 +33,7 @@ class CategoryResponse(BaseModel):
 
 class CategoryTreeResponse(BaseModel):
     """分类树响应（含子分类）"""
-    id: str
+    id: int
     name: str
     icon: Optional[str]
     children: List["CategoryTreeResponse"] = []

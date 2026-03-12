@@ -13,9 +13,9 @@ class ItemService:
     """物品业务逻辑"""
     
     @staticmethod
-    def create(db: Session, family_id: str, creator_id: str, name: str, 
+    def create(db: Session, family_id: int, creator_id: int, name: str,
                location: str, description: Optional[str] = None,
-               photo_path: Optional[str] = None, category_id: Optional[str] = None,
+               photo_path: Optional[str] = None, category_id: Optional[int] = None,
                extension_data: Optional[dict] = None) -> Item:
         """创建物品"""
         item = Item(
@@ -41,7 +41,7 @@ class ItemService:
         return item
     
     @staticmethod
-    def get_by_id(db: Session, item_id: str) -> Optional[Item]:
+    def get_by_id(db: Session, item_id: int) -> Optional[Item]:
         """获取物品"""
         return db.query(Item).filter(Item.id == item_id).first()
 
@@ -53,7 +53,7 @@ class ItemService:
         return db.query(Item).filter(Item.id.in_(item_ids)).all()
 
     @staticmethod
-    def get_with_details(db: Session, item_id: str) -> Optional[dict]:
+    def get_with_details(db: Session, item_id: int) -> Optional[dict]:
         """获取物品详情（含扩展信息和创建者）"""
         item = ItemService.get_by_id(db, item_id)
         if not item:
@@ -75,7 +75,7 @@ class ItemService:
         }
     
     @staticmethod
-    def update(db: Session, item_id: str, **kwargs) -> Optional[Item]:
+    def update(db: Session, item_id: int, **kwargs) -> Optional[Item]:
         """更新物品"""
         item = ItemService.get_by_id(db, item_id)
         if not item:
@@ -104,7 +104,7 @@ class ItemService:
         return item
     
     @staticmethod
-    def delete(db: Session, item_id: str) -> bool:
+    def delete(db: Session, item_id: int) -> bool:
         """删除物品"""
         item = ItemService.get_by_id(db, item_id)
         if not item:
@@ -115,7 +115,7 @@ class ItemService:
         return True
     
     @staticmethod
-    def get_by_family(db: Session, family_id: str, limit: int = 50, 
+    def get_by_family(db: Session, family_id: int, limit: int = 50,
                       offset: int = 0) -> tuple[List[Item], int]:
         """获取家庭物品列表"""
         query = db.query(Item).filter(
@@ -129,7 +129,7 @@ class ItemService:
         return items, total
     
     @staticmethod
-    def search(db: Session, family_id: str, keyword: str, 
+    def search(db: Session, family_id: int, keyword: str,
                limit: int = 20) -> List[Item]:
         """搜索物品"""
         return db.query(Item).filter(
@@ -143,7 +143,7 @@ class ItemService:
         ).order_by(Item.created_at.desc()).limit(limit).all()
     
     @staticmethod
-    def record_find(db: Session, item_id: str) -> Optional[Item]:
+    def record_find(db: Session, item_id: int) -> Optional[Item]:
         """记录查找（增加查找次数）"""
         item = ItemService.get_by_id(db, item_id)
         if not item:

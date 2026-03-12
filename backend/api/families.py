@@ -14,17 +14,20 @@ from services import FamilyService, UserService
 router = APIRouter(prefix="/families", tags=["家庭管理"])
 
 
-def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> str:
-    """获取当前用户ID"""
+def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> int:
+    """获取当前用户ID（整型）"""
     if not user_id:
         raise HTTPException(status_code=401, detail="未登录")
-    return user_id
+    try:
+        return int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="无效的用户ID")
 
 
 @router.post("", response_model=Response[FamilyResponse])
 async def create_family(
     request: FamilyCreate,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """创建家庭"""
@@ -38,7 +41,7 @@ async def create_family(
         db.commit()
     
     return Response(data=FamilyResponse(
-        id=family.id,
+        id=int(family.id),
         name=family.name,
         invite_code=family.invite_code,
         member_count=1,
@@ -49,7 +52,7 @@ async def create_family(
 @router.post("/join", response_model=Response[dict])
 async def join_family(
     request: FamilyJoinRequest,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """加入家庭"""
@@ -58,16 +61,17 @@ async def join_family(
     if not success:
         raise HTTPException(status_code=404, detail=result)
     
+    fam = FamilyService.get_by_invite_code(db, request.invite_code)
     return Response(data={
-        "family_id": FamilyService.get_by_invite_code(db, request.invite_code).id,
+        "family_id": int(fam.id) if fam else None,
         "family_name": result
     })
 
 
 @router.get("/{family_id}", response_model=Response[FamilyResponse])
 async def get_family(
-    family_id: str,
-    user_id: str = Depends(get_current_user),
+    family_id: int,
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取家庭信息"""
@@ -78,7 +82,7 @@ async def get_family(
     member_count = FamilyService.get_member_count(db, family_id)
     
     return Response(data=FamilyResponse(
-        id=family.id,
+        id=int(family.id),
         name=family.name,
         invite_code=family.invite_code,
         member_count=member_count,
@@ -88,8 +92,8 @@ async def get_family(
 
 @router.get("/{family_id}/members", response_model=Response[list[UserResponse]])
 async def get_family_members(
-    family_id: str,
-    user_id: str = Depends(get_current_user),
+    family_id: int,
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取家庭成员"""
@@ -98,8 +102,8 @@ async def get_family_members(
     return Response(
         data=[
             UserResponse(
-                id=m.id,
-                family_id=m.family_id,
+                id=int(m.id),
+                family_id=int(m.family_id) if m.family_id else None,
                 wechat_openid=m.wechat_openid,
                 nickname=m.nickname,
                 avatar_url=m.avatar_url,

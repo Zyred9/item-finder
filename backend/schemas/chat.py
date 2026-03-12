@@ -8,7 +8,7 @@ from typing import Optional, List, Any
 
 class ChatRequest(BaseModel):
     """对话请求"""
-    family_id: str
+    family_id: int
     session_id: Optional[str] = None  # 不传则创建新会话
     message: str = Field(..., min_length=1, max_length=500)
     audio_path: Optional[str] = None  # 语音输入时使用
@@ -32,7 +32,7 @@ class ChatResponse(BaseModel):
 
 class ChatMessageResponse(BaseModel):
     """对话消息响应"""
-    id: str
+    id: int
     session_id: str
     role: str
     content: str
@@ -52,7 +52,7 @@ class ChatHistoryResponse(BaseModel):
 
 class SummarizeRequest(BaseModel):
     """聊天记录压缩总结请求"""
-    family_id: str
+    family_id: int
     session_id: str
 
 

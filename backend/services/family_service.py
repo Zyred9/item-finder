@@ -3,7 +3,6 @@
 """
 from sqlalchemy.orm import Session
 from typing import Optional
-import uuid
 
 from models import Family, User
 
@@ -12,7 +11,7 @@ class FamilyService:
     """家庭业务逻辑"""
     
     @staticmethod
-    def create(db: Session, name: str, creator_id: Optional[str] = None) -> Family:
+    def create(db: Session, name: str, creator_id: Optional[int] = None) -> Family:
         """创建家庭"""
         family = Family(name=name)
         db.add(family)
@@ -30,7 +29,7 @@ class FamilyService:
         return family
     
     @staticmethod
-    def get_by_id(db: Session, family_id: str) -> Optional[Family]:
+    def get_by_id(db: Session, family_id: int) -> Optional[Family]:
         """获取家庭"""
         return db.query(Family).filter(Family.id == family_id).first()
     
@@ -40,7 +39,7 @@ class FamilyService:
         return db.query(Family).filter(Family.invite_code == invite_code.upper()).first()
     
     @staticmethod
-    def join(db: Session, invite_code: str, user_id: str) -> tuple[bool, str]:
+    def join(db: Session, invite_code: str, user_id: int) -> tuple[bool, str]:
         """加入家庭"""
         family = FamilyService.get_by_invite_code(db, invite_code)
         if not family:
@@ -59,11 +58,11 @@ class FamilyService:
         return True, family.name
     
     @staticmethod
-    def get_members(db: Session, family_id: str) -> list[User]:
+    def get_members(db: Session, family_id: int) -> list[User]:
         """获取家庭成员"""
         return db.query(User).filter(User.family_id == family_id).all()
     
     @staticmethod
-    def get_member_count(db: Session, family_id: str) -> int:
+    def get_member_count(db: Session, family_id: int) -> int:
         """获取成员数量"""
         return db.query(User).filter(User.family_id == family_id).count()

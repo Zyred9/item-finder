@@ -12,7 +12,7 @@ class ReminderService:
     """提醒业务逻辑"""
     
     @staticmethod
-    def get_by_family(db: Session, family_id: str, status: Optional[str] = None,
+    def get_by_family(db: Session, family_id: int, status: Optional[str] = None,
                       level: Optional[str] = None) -> tuple[List[Reminder], dict]:
         """获取家庭提醒列表"""
         query = db.query(Reminder).filter(Reminder.family_id == family_id)
@@ -51,7 +51,7 @@ class ReminderService:
         return reminders, counts
     
     @staticmethod
-    def handle(db: Session, reminder_id: str, action: str, 
+    def handle(db: Session, reminder_id: int, action: str, 
                defer_days: Optional[int] = None) -> Optional[Reminder]:
         """处理提醒"""
         reminder = db.query(Reminder).filter(Reminder.id == reminder_id).first()

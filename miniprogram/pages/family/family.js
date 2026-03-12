@@ -41,10 +41,8 @@ Page({
 
   async onRemarkEditTap(e) {
     const userId = e.currentTarget.dataset.userId
-    if (!userId) {
-      return
-    }
-    this.setData({ editingRemarkUserId: userId })
+    if (userId === undefined || userId === null || userId === '') return
+    this.setData({ editingRemarkUserId: Number(userId) })
   },
 
   onRemarkInput(e) {
@@ -54,7 +52,7 @@ Page({
       return
     }
     const members = (this.data.members || []).map((m) => {
-      if (m.id === userId) {
+      if (Number(m.id) === Number(userId)) {
         return { ...m, _tempRemark: value }
       }
       return m
@@ -70,7 +68,7 @@ Page({
       return
     }
     const members = this.data.members || []
-    const target = members.find((m) => m.id === userId)
+    const target = members.find((m) => Number(m.id) === Number(userId))
     if (!target) {
       this.setData({ editingRemarkUserId: '' })
       return
@@ -87,7 +85,7 @@ Page({
     try {
       await api.updateUserRemark(userId, value)
       const updated = members.map((m) => {
-        if (m.id === userId) {
+        if (Number(m.id) === Number(userId)) {
           return { ...m, remark: value, _tempRemark: undefined }
         }
         return m

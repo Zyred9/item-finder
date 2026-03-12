@@ -1,10 +1,9 @@
 """
 分类模型
 """
-from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import uuid
 
 from .base import Base
 
@@ -13,11 +12,12 @@ class Category(Base):
     """物品分类表"""
     __tablename__ = "categories"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    code = Column(String(50), unique=True, nullable=True, index=True, comment="业务编码如 medicine/food")
     name = Column(String(50), nullable=False, comment="分类名称")
     icon = Column(String(10), comment="图标(emoji)")
-    parent_id = Column(String(36), ForeignKey("categories.id", ondelete="SET NULL"), 
-                       index=True, comment="父分类ID")
+    parent_id = Column(BigInteger, ForeignKey("categories.id", ondelete="SET NULL"),
+                      nullable=True, index=True, comment="父分类ID")
     sort_order = Column(Integer, default=0, comment="排序")
     extension_fields = Column(Text, comment="扩展字段配置(JSON)")
     created_at = Column(DateTime, default=datetime.now)

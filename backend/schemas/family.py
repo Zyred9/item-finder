@@ -18,7 +18,7 @@ class FamilyUpdate(BaseModel):
 
 class FamilyResponse(BaseModel):
     """家庭响应"""
-    id: str
+    id: int
     name: str
     invite_code: str
     member_count: int = 0

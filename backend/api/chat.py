@@ -21,17 +21,20 @@ from services.llm_service import summarize_chat
 router = APIRouter(prefix="/chat", tags=["对话找物"])
 
 
-def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> str:
-    """获取当前用户ID"""
+def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> int:
+    """获取当前用户ID（整型）"""
     if not user_id:
         raise HTTPException(status_code=401, detail="未登录")
-    return user_id
+    try:
+        return int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="无效的用户ID")
 
 
 @router.post("", response_model=Response[ChatResponse])
 async def chat(
     request: ChatRequest,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """对话找物（意图由 DeepSeek 解析，失败时回退规则）"""
@@ -47,10 +50,10 @@ async def chat(
 
 @router.get("/history", response_model=Response[ChatHistoryResponse])
 async def get_chat_history(
-    family_id: str,
+    family_id: int,
     session_id: str,
     limit: int = 50,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取对话历史"""
@@ -62,13 +65,14 @@ async def get_chat_history(
         if m.matched_items:
             try:
                 ids = json.loads(m.matched_items)
+                ids = [int(x) for x in ids] if ids else []
                 if ids:
                     items = ItemService.get_by_ids(db, ids)
                     matched_items = ChatService._items_to_dict(items)
-            except (json.JSONDecodeError, TypeError):
+            except (json.JSONDecodeError, TypeError, ValueError):
                 pass
         result.append(ChatMessageResponse(
-            id=m.id,
+            id=int(m.id),
             session_id=m.session_id,
             role=m.role,
             content=m.content,
@@ -86,7 +90,7 @@ async def get_chat_history(
 @router.post("/summarize", response_model=Response[SummarizeResponse])
 async def summarize_chat_history(
     request: SummarizeRequest,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """聊天记录压缩总结：拉取当前会话历史，调用 DeepSeek 生成一段总结"""
@@ -116,9 +120,9 @@ async def summarize_chat_history(
 
 @router.delete("/history", response_model=Response)
 async def clear_chat_history(
-    family_id: str,
+    family_id: int,
     session_id: str,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """清空对话历史"""
@@ -134,7 +138,7 @@ async def clear_chat_history(
 async def voice_recognize(
     file: UploadFile = File(..., description="录音文件，表单字段名须为 file"),
     scene: str = Form("common"),
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """语音识别（百炼 Fun-ASR），需配置 BAILIAN_API_KEY 与 BACKEND_PUBLIC_URL"""
@@ -247,7 +251,7 @@ async def voice_recognize(
 @router.post("/voice/tts", response_model=Response[VoiceTTSResponse])
 async def text_to_speech(
     request: VoiceTTSRequest,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """文字转语音（百炼 TTS），未配置时返回占位"""

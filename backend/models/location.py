@@ -1,10 +1,9 @@
 """
 位置模型
 """
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import uuid
 
 from .base import Base
 
@@ -13,12 +12,12 @@ class Location(Base):
     """常用位置表"""
     __tablename__ = "locations"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    family_id = Column(String(36), ForeignKey("families.id", ondelete="CASCADE"), 
-                       nullable=False, index=True, comment="家庭ID")
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    family_id = Column(BigInteger, ForeignKey("families.id", ondelete="CASCADE"),
+                      nullable=False, index=True, comment="家庭ID")
     name = Column(String(100), nullable=False, comment="位置名称")
-    parent_id = Column(String(36), ForeignKey("locations.id", ondelete="SET NULL"), 
-                       index=True, comment="父位置ID")
+    parent_id = Column(BigInteger, ForeignKey("locations.id", ondelete="SET NULL"),
+                      nullable=True, index=True, comment="父位置ID")
     usage_count = Column(Integer, default=0, comment="使用次数")
     created_at = Column(DateTime, default=datetime.now)
     

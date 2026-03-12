@@ -45,64 +45,57 @@ def init_db():
 
 
 def _init_categories():
-    """初始化默认分类数据"""
+    """初始化默认分类数据（id 自增，业务编码用 code）"""
     from models import Category
-    
+
     db = SessionLocal()
     try:
-        # 检查是否已有分类
         if db.query(Category).count() > 0:
             print("[INFO] Categories already exist, skipping initialization")
             return
-        
-        # 默认分类数据
+
         default_categories = [
-            # 主分类
-            {"id": "medicine", "name": "药品健康", "icon": "💊", "parent_id": None},
-            {"id": "food", "name": "食品饮料", "icon": "🍔", "parent_id": None},
-            {"id": "document", "name": "证件文件", "icon": "📄", "parent_id": None},
-            {"id": "electronics", "name": "电器数码", "icon": "🔌", "parent_id": None},
-            {"id": "clothing", "name": "服饰鞋包", "icon": "👕", "parent_id": None},
-            {"id": "other", "name": "其他", "icon": "📦", "parent_id": None},
-            # 药品子分类
-            {"id": "prescription", "name": "处方药", "icon": None, "parent_id": "medicine"},
-            {"id": "otc", "name": "非处方药", "icon": None, "parent_id": "medicine"},
-            {"id": "supplement", "name": "保健品", "icon": None, "parent_id": "medicine"},
-            {"id": "device", "name": "医疗器械", "icon": None, "parent_id": "medicine"},
-            # 食品子分类
-            {"id": "snacks", "name": "零食", "icon": None, "parent_id": "food"},
-            {"id": "condiment", "name": "调味品", "icon": None, "parent_id": "food"},
-            {"id": "baby_food", "name": "婴幼儿食品", "icon": None, "parent_id": "food"},
-            # 证件子分类
-            {"id": "id_card", "name": "身份证", "icon": None, "parent_id": "document"},
-            {"id": "passport", "name": "护照", "icon": None, "parent_id": "document"},
-            {"id": "bank_card", "name": "银行卡", "icon": None, "parent_id": "document"},
-            {"id": "contract", "name": "合同", "icon": None, "parent_id": "document"},
-            {"id": "receipt", "name": "票据", "icon": None, "parent_id": "document"},
-            # 电器子分类
-            {"id": "kitchen_appliance", "name": "厨房电器", "icon": None, "parent_id": "electronics"},
-            {"id": "home_appliance", "name": "生活电器", "icon": None, "parent_id": "electronics"},
-            {"id": "digital", "name": "数码产品", "icon": None, "parent_id": "electronics"},
-            {"id": "accessory", "name": "配件", "icon": None, "parent_id": "electronics"},
-            # 服饰子分类
-            {"id": "tops", "name": "上衣", "icon": None, "parent_id": "clothing"},
-            {"id": "pants", "name": "裤子", "icon": None, "parent_id": "clothing"},
-            {"id": "shoes", "name": "鞋子", "icon": None, "parent_id": "clothing"},
-            {"id": "bags", "name": "包包", "icon": None, "parent_id": "clothing"},
+            {"code": "medicine", "name": "药品健康", "icon": "💊", "parent_code": None},
+            {"code": "food", "name": "食品饮料", "icon": "🍔", "parent_code": None},
+            {"code": "document", "name": "证件文件", "icon": "📄", "parent_code": None},
+            {"code": "electronics", "name": "电器数码", "icon": "🔌", "parent_code": None},
+            {"code": "clothing", "name": "服饰鞋包", "icon": "👕", "parent_code": None},
+            {"code": "other", "name": "其他", "icon": "📦", "parent_code": None},
+            {"code": "prescription", "name": "处方药", "icon": None, "parent_code": "medicine"},
+            {"code": "otc", "name": "非处方药", "icon": None, "parent_code": "medicine"},
+            {"code": "supplement", "name": "保健品", "icon": None, "parent_code": "medicine"},
+            {"code": "device", "name": "医疗器械", "icon": None, "parent_code": "medicine"},
+            {"code": "snacks", "name": "零食", "icon": None, "parent_code": "food"},
+            {"code": "condiment", "name": "调味品", "icon": None, "parent_code": "food"},
+            {"code": "baby_food", "name": "婴幼儿食品", "icon": None, "parent_code": "food"},
+            {"code": "id_card", "name": "身份证", "icon": None, "parent_code": "document"},
+            {"code": "passport", "name": "护照", "icon": None, "parent_code": "document"},
+            {"code": "bank_card", "name": "银行卡", "icon": None, "parent_code": "document"},
+            {"code": "contract", "name": "合同", "icon": None, "parent_code": "document"},
+            {"code": "receipt", "name": "票据", "icon": None, "parent_code": "document"},
+            {"code": "kitchen_appliance", "name": "厨房电器", "icon": None, "parent_code": "electronics"},
+            {"code": "home_appliance", "name": "生活电器", "icon": None, "parent_code": "electronics"},
+            {"code": "digital", "name": "数码产品", "icon": None, "parent_code": "electronics"},
+            {"code": "accessory", "name": "配件", "icon": None, "parent_code": "electronics"},
+            {"code": "tops", "name": "上衣", "icon": None, "parent_code": "clothing"},
+            {"code": "pants", "name": "裤子", "icon": None, "parent_code": "clothing"},
+            {"code": "shoes", "name": "鞋子", "icon": None, "parent_code": "clothing"},
+            {"code": "bags", "name": "包包", "icon": None, "parent_code": "clothing"},
         ]
-        
-        for cat_data in default_categories:
-            category = Category(
-                id=cat_data["id"],
-                name=cat_data["name"],
-                icon=cat_data.get("icon"),
-                parent_id=cat_data.get("parent_id")
+        code_to_id = {}
+        for row in default_categories:
+            parent_id = code_to_id.get(row["parent_code"]) if row.get("parent_code") else None
+            cat = Category(
+                code=row["code"],
+                name=row["name"],
+                icon=row.get("icon"),
+                parent_id=parent_id,
             )
-            db.add(category)
-        
+            db.add(cat)
+            db.flush()
+            code_to_id[row["code"]] = cat.id
         db.commit()
         print(f"[OK] Initialized {len(default_categories)} default categories")
-        
     except Exception as e:
         print(f"[ERROR] Failed to initialize categories: {e}")
         db.rollback()

@@ -1,10 +1,9 @@
 """
 用户模型
 """
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import uuid
 
 from .base import Base
 
@@ -13,9 +12,9 @@ class User(Base):
     """用户表"""
     __tablename__ = "users"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    family_id = Column(String(36), ForeignKey("families.id", ondelete="SET NULL"), 
-                       nullable=True, comment="家庭ID")
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    family_id = Column(BigInteger, ForeignKey("families.id", ondelete="SET NULL"),
+                      nullable=True, index=True, comment="家庭ID")
     wechat_openid = Column(String(64), unique=True, nullable=False, comment="微信OpenID")
     nickname = Column(String(50), comment="昵称")
     remark = Column(String(100), nullable=True, comment="家庭内备注名")

@@ -1,10 +1,9 @@
 """
 物品模型
 """
-from sqlalchemy import Column, String, Text, Boolean, Integer, DateTime, ForeignKey, Date
+from sqlalchemy import Column, String, Text, Boolean, Integer, DateTime, ForeignKey, Date, BigInteger
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import uuid
 
 from .base import Base
 
@@ -14,19 +13,19 @@ class Item(Base):
     __tablename__ = "items"
     
     # 基础信息
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    family_id = Column(String(36), ForeignKey("families.id", ondelete="CASCADE"), 
-                       nullable=False, index=True, comment="家庭ID")
-    creator_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), 
-                        nullable=False, index=True, comment="创建者ID")
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    family_id = Column(BigInteger, ForeignKey("families.id", ondelete="CASCADE"),
+                      nullable=False, index=True, comment="家庭ID")
+    creator_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"),
+                       nullable=False, index=True, comment="创建者ID")
     name = Column(String(100), nullable=False, index=True, comment="物品名称")
     location = Column(String(200), nullable=False, comment="存放位置")
     description = Column(Text, comment="描述")
     photo_path = Column(String(500), comment="照片路径")
     
     # 分类
-    category_id = Column(String(36), ForeignKey("categories.id", ondelete="SET NULL"),
-                         index=True, comment="分类ID")
+    category_id = Column(BigInteger, ForeignKey("categories.id", ondelete="SET NULL"),
+                        nullable=True, index=True, comment="分类ID")
     
     # 状态
     status = Column(String(20), default="active", index=True, comment="状态: active/archived/deleted")
@@ -56,9 +55,9 @@ class ItemExtension(Base):
     """物品扩展信息表"""
     __tablename__ = "item_extensions"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    item_id = Column(String(36), ForeignKey("items.id", ondelete="CASCADE"), 
-                     unique=True, nullable=False, comment="物品ID")
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    item_id = Column(BigInteger, ForeignKey("items.id", ondelete="CASCADE"),
+                    unique=True, nullable=False, index=True, comment="物品ID")
     
     # 药品相关
     expire_date = Column(Date, index=True, comment="过期日期")

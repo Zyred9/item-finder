@@ -1,23 +1,27 @@
 """
 家庭模型
 """
-from sqlalchemy import Column, String, DateTime
+import secrets
+from sqlalchemy import Column, String, DateTime, BigInteger
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import uuid
 
 from .base import Base
+
+
+def _default_invite_code():
+    return secrets.token_hex(3).upper()
 
 
 class Family(Base):
     """家庭表"""
     __tablename__ = "families"
-    
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False, comment="家庭名称")
-    invite_code = Column(String(6), unique=True, nullable=False, 
-                         default=lambda: str(uuid.uuid4())[:6].upper(),
-                         comment="邀请码")
+    invite_code = Column(String(6), unique=True, nullable=False,
+                        default=_default_invite_code,
+                        comment="邀请码")
     created_at = Column(DateTime, default=datetime.now, comment="创建时间")
     
     # 关系

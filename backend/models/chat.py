@@ -1,10 +1,9 @@
 """
 对话模型
 """
-from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey
+from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import uuid
 
 from .base import Base
 
@@ -13,11 +12,11 @@ class ChatMessage(Base):
     """对话消息表"""
     __tablename__ = "chat_messages"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    family_id = Column(String(36), ForeignKey("families.id", ondelete="CASCADE"), 
-                       nullable=False, index=True, comment="家庭ID")
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), 
-                     nullable=False, index=True, comment="用户ID")
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    family_id = Column(BigInteger, ForeignKey("families.id", ondelete="CASCADE"),
+                      nullable=False, index=True, comment="家庭ID")
+    user_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"),
+                    nullable=False, index=True, comment="用户ID")
     session_id = Column(String(36), nullable=False, index=True, comment="会话ID")
     
     # 消息内容

@@ -55,19 +55,18 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         db.refresh(user)
         
         return Response(data=LoginResponse(
-            user_id=user.id,
+            user_id=int(user.id),
             nickname=user.nickname,
             avatar_url=user.avatar_url,
             family_id=None,
             family_name=None,
             openid=openid
         ))
-    
-    # 获取家庭信息
+
     family_info = UserService.get_family_info(db, user.id) if user.family_id else None
-    
+
     return Response(data=LoginResponse(
-        user_id=user.id,
+        user_id=int(user.id),
         nickname=user.nickname,
         avatar_url=user.avatar_url,
         family_id=family_info.get("family_id") if family_info else None,

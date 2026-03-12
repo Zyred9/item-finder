@@ -1,10 +1,9 @@
 """
 提醒模型
 """
-from sqlalchemy import Column, String, Date, DateTime, ForeignKey, Text
+from sqlalchemy import Column, String, Date, DateTime, ForeignKey, Text, BigInteger
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import uuid
 
 from .base import Base
 
@@ -13,11 +12,11 @@ class Reminder(Base):
     """智能提醒表"""
     __tablename__ = "reminders"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    family_id = Column(String(36), ForeignKey("families.id", ondelete="CASCADE"), 
-                       nullable=False, index=True, comment="家庭ID")
-    item_id = Column(String(36), ForeignKey("items.id", ondelete="CASCADE"), 
-                     nullable=False, index=True, comment="物品ID")
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    family_id = Column(BigInteger, ForeignKey("families.id", ondelete="CASCADE"),
+                      nullable=False, index=True, comment="家庭ID")
+    item_id = Column(BigInteger, ForeignKey("items.id", ondelete="CASCADE"),
+                    nullable=False, index=True, comment="物品ID")
     
     # 提醒信息
     type = Column(String(20), nullable=False, index=True, 

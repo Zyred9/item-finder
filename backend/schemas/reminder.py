@@ -8,9 +8,9 @@ from typing import Optional, List
 
 class ReminderResponse(BaseModel):
     """提醒响应"""
-    id: str
-    family_id: str
-    item_id: str
+    id: int
+    family_id: int
+    item_id: int
     type: str
     level: str
     title: str

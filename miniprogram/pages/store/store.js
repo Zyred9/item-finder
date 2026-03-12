@@ -78,8 +78,10 @@ Page({
         return
       }
       const categories = this.data.categories || []
-      const categoryId = item.category_id || ''
-      const selectedCategory = categories.find((c) => c.id === categoryId) || null
+      const categoryId = item.category_id != null ? item.category_id : ''
+      const selectedCategory = (categoryId !== '' && categoryId != null)
+        ? categories.find((c) => Number(c.id) === Number(categoryId)) || null
+        : null
       const extensionFields = (selectedCategory && selectedCategory.extension_fields) || []
       const ext = item.extension && typeof item.extension === 'object' ? item.extension : {}
       const extensionValues = {}

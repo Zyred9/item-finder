@@ -20,7 +20,7 @@ class ChatService:
         return str(uuid.uuid4())
 
     @staticmethod
-    async def chat(db: Session, family_id: str, user_id: str, message: str,
+    async def chat(db: Session, family_id: int, user_id: int, message: str,
                    session_id: Optional[str] = None) -> dict:
         """处理对话（意图由 DeepSeek 解析，失败时回退到规则）"""
         if not session_id:
@@ -66,7 +66,7 @@ class ChatService:
         }
 
     @staticmethod
-    def _apply_parsed_intent(db: Session, family_id: str, parsed: dict) -> tuple[str, list, str]:
+    def _apply_parsed_intent(db: Session, family_id: int, parsed: dict) -> tuple[str, list, str]:
         """根据 DeepSeek 解析结果执行查库并生成回复"""
         intent = (parsed.get("intent") or "unknown").strip().lower()
         keyword = (parsed.get("keyword") or "").strip()
@@ -84,7 +84,7 @@ class ChatService:
         return "unknown", [], "抱歉，我没听懂。你可以问我「某某东西在哪」试试～"
 
     @staticmethod
-    def _process_intent(db: Session, family_id: str, message: str) -> tuple[str, list, str]:
+    def _process_intent(db: Session, family_id: int, message: str) -> tuple[str, list, str]:
         """规则兜底：DeepSeek 不可用时的关键词匹配"""
         msg = message or ""
 
@@ -121,7 +121,7 @@ class ChatService:
         result = []
         for item in items:
             result.append({
-                "id": item.id,
+                "id": int(item.id),
                 "name": item.name,
                 "location": item.location,
                 "photo_path": item.photo_path,
@@ -147,7 +147,7 @@ class ChatService:
         return actions
     
     @staticmethod
-    def get_history(db: Session, family_id: str, session_id: str, 
+    def get_history(db: Session, family_id: int, session_id: str, 
                     limit: int = 50) -> List[ChatMessage]:
         """获取对话历史"""
         return db.query(ChatMessage).filter(
@@ -156,7 +156,7 @@ class ChatService:
         ).order_by(ChatMessage.created_at.asc()).limit(limit).all()
     
     @staticmethod
-    def clear_history(db: Session, family_id: str, session_id: str) -> bool:
+    def clear_history(db: Session, family_id: int, session_id: str) -> bool:
         """清空对话历史"""
         deleted = db.query(ChatMessage).filter(
             ChatMessage.family_id == family_id,
