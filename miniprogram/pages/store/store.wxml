@@ -98,8 +98,8 @@
     </view>
   </view>
 
-  <!-- 扩展信息：仅当选中的分类有扩展字段时展示 -->
-  <view class="section" wx:if="{{extensionFields.length > 0}}">
+  <!-- 扩展信息：始终展示，内部根据是否有扩展字段/识别结果决定内容 -->
+  <view class="section">
     <view class="form-card extension-card">
       <view class="form-card-title">📌 扩展信息</view>
       <view class="extension-modes-desc">支持拍照凭证、语音补充、手动填写三种方式</view>
@@ -107,7 +107,7 @@
       <!-- 方式一：拍照（凭证照）+ OCR 提取文字 -->
       <view class="extension-mode-block">
         <view class="extension-mode-label">
-          <image class="extension-photo-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
+          <image class="extension-voice-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
           <text>拍照</text>
         </view>
         <view class="extension-photo-wrap" bindtap="onExtensionPhoto">

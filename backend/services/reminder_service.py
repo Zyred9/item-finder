@@ -6,6 +6,11 @@ from typing import List, Optional
 from datetime import date, timedelta
 
 from models import Reminder, Item, ItemExtension
+from services.expiry_reminder_agent import (
+    _level_for_days_left,
+    _title_suffix_for_days,
+    _content_for_days,
+)
 
 
 class ReminderService:
@@ -113,3 +118,33 @@ class ReminderService:
         
         db.commit()
         return count
+
+    @staticmethod
+    def refresh_pending_reminders(db: Session) -> int:
+        """
+        每日定时任务：扫描所有待处理提醒，按当前日期重算剩余天数，
+        更新 title（即将过期/临近过期/过期提醒）、level、content。
+        """
+        today = date.today()
+        pending = db.query(Reminder).filter(Reminder.status == "pending").all()
+        updated = 0
+        content_prefix = {"expire": "还有", "open": "开封后还有", "warranty": "保修还有"}
+
+        for reminder in pending:
+            item = db.query(Item).filter(Item.id == reminder.item_id).first()
+            if not item:
+                continue
+            days_left = (reminder.remind_at - today).days
+            level = _level_for_days_left(days_left)
+            suffix = _title_suffix_for_days(days_left, reminder.type)
+            prefix = content_prefix.get(reminder.type, "还有")
+            content = _content_for_days(days_left, prefix)
+
+            reminder.level = level
+            reminder.title = f"{item.name} {suffix}"
+            reminder.content = content
+            updated += 1
+
+        if updated > 0:
+            db.commit()
+        return updated

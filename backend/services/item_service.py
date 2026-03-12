@@ -7,6 +7,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from models import Item, ItemExtension, User, Category
+from services.expiry_reminder_agent import sync_reminders_for_item
 
 
 class ItemService:
@@ -34,10 +35,11 @@ class ItemService:
         if extension_data:
             extension = ItemExtension(item_id=item.id, **extension_data)
             db.add(extension)
-        
+
         db.commit()
         db.refresh(item)
-        
+        sync_reminders_for_item(db, item)
+
         return item
     
     @staticmethod
@@ -100,7 +102,8 @@ class ItemService:
         item.updated_at = datetime.now()
         db.commit()
         db.refresh(item)
-        
+        sync_reminders_for_item(db, item)
+
         return item
     
     @staticmethod

@@ -6,9 +6,10 @@ from .category import Category
 from .reminder import Reminder
 from .chat import ChatMessage
 from .location import Location
+from .feedback import Feedback
 
 __all__ = [
     "Base", "engine", "SessionLocal", "get_db", "init_db",
     "Family", "User", "Item", "ItemExtension",
-    "Category", "Reminder", "ChatMessage", "Location"
+    "Category", "Reminder", "ChatMessage", "Location", "Feedback"
 ]

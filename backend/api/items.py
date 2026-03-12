@@ -48,10 +48,18 @@ async def photo_understand(
         raise HTTPException(status_code=400, detail="图片为空")
     try:
         out = understand_item_photo(content, mime_type=mime)
-        return Response(data={
+        data = {
             "suggested_name": out.get("suggested_name", ""),
             "suggested_category": out.get("suggested_category", ""),
-        })
+        }
+        if out.get("suggested_extension"):
+            data["suggested_extension"] = out["suggested_extension"]
+        # 日志：主图理解接口返回给前端的数据
+        try:
+            print("[api] /items/photo/understand data:", json.dumps(data, ensure_ascii=False))
+        except Exception:
+            print("[api] /items/photo/understand data (raw):", data)
+        return Response(data=data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:
@@ -76,7 +84,21 @@ async def photo_ocr(
         raise HTTPException(status_code=400, detail="图片为空")
     try:
         text = extract_text(content, mime_type=mime)
-        return Response(data={"text": text})
+        data = {"text": text}
+        if text and text.strip():
+            from services.llm_service import extract_extension_from_text
+            suggested = await extract_extension_from_text(text.strip())
+            if suggested:
+                data["suggested_extension"] = suggested
+        # 日志：OCR 原始文本 + 抽取出的扩展字段
+        try:
+            preview = (text or "")[:200]
+            print("[api] /items/photo/ocr text_preview:", preview.replace("\n", " "))
+            if data.get("suggested_extension"):
+                print("[api] /items/photo/ocr suggested_extension:", json.dumps(data["suggested_extension"], ensure_ascii=False))
+        except Exception:
+            print("[api] /items/photo/ocr data (raw):", data)
+        return Response(data=data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:

@@ -4,6 +4,16 @@
 const api = require('../../utils/api')
 const util = require('../../utils/util')
 
+// 图片/语音识别出的扩展字段若当前分类未配置，用此配置展示（保证「扩展信息」区块可见）
+const DEFAULT_EXTENSION_FIELD_CONFIGS = [
+  { name: 'expire_date', label: '过期日期', type: 'date', required: false },
+  { name: 'production_date', label: '生产日期', type: 'date', required: false },
+  { name: 'warranty_date', label: '保修到期日', type: 'date', required: false },
+  { name: 'shelf_life_days', label: '保质期(天)', type: 'number', required: false },
+  { name: 'open_date', label: '开封日期', type: 'date', required: false },
+  { name: 'open_shelf_life', label: '开封后保质(天)', type: 'number', required: false }
+]
+
 Page({
   data: {
     // 编辑模式
@@ -142,11 +152,14 @@ Page({
       success: async (res) => {
         const tempFilePath = res.tempFiles[0].tempFilePath
         this.setData({ 'formData.photo_path': tempFilePath })
+        wx.showLoading({ title: '识别中...', mask: true })
         try {
           const out = await api.photoUnderstand(tempFilePath)
           const name = (out && out.suggested_name) || ''
           const categorySuggestion = (out && out.suggested_category) || ''
-          if (name || categorySuggestion) {
+          const suggestedExt = (out && out.suggested_extension) && typeof out.suggested_extension === 'object' ? out.suggested_extension : {}
+          const hasAny = name || categorySuggestion || Object.keys(suggestedExt).length > 0
+          if (hasAny) {
             const updates = {}
             if (name) updates['formData.name'] = name
             const categories = this.data.categories || []
@@ -161,11 +174,24 @@ Page({
             if (categorySuggestion && !match) {
               updates.suggestedCategoryName = categorySuggestion
             }
+            if (Object.keys(suggestedExt).length > 0) {
+              updates.extensionValues = { ...(this.data.extensionValues || {}), ...suggestedExt }
+              // 识别出扩展字段时，确保「扩展信息」区块展示：当前分类若无对应配置则补默认配置
+              const baseFields = updates.extensionFields !== undefined ? updates.extensionFields : (this.data.extensionFields || [])
+              const existingNames = baseFields.map((f) => f.name)
+              const toAdd = DEFAULT_EXTENSION_FIELD_CONFIGS.filter(
+                (d) => suggestedExt[d.name] !== undefined && existingNames.indexOf(d.name) === -1
+              )
+              updates.extensionFields = baseFields.concat(toAdd)
+            }
             this.setData(updates)
             if (name) wx.showToast({ title: '已识别建议名称', icon: 'success' })
+            else if (Object.keys(suggestedExt).length > 0) wx.showToast({ title: '已识别日期等信息', icon: 'success' })
           }
         } catch (e) {
           console.warn('主图理解未启用或失败', e)
+        } finally {
+          wx.hideLoading()
         }
       }
     })
@@ -219,17 +245,28 @@ Page({
       return
     }
     try {
-      wx.showLoading({ title: '提取中...' })
+      wx.showLoading({ title: '提取中...', mask: true })
       const out = await api.photoOcr(path)
       wx.hideLoading()
       const text = (out && out.text && String(out.text).trim()) || ''
       if (text) {
         const prev = this.data.extensionVoiceText || ''
-        this.setData({
+        const setData = {
           extensionVoiceText: prev ? `${prev}\n${text}` : text,
           showExtensionVoiceResult: true
-        })
-        wx.showToast({ title: '已提取文字', icon: 'success' })
+        }
+        const suggestedExt = (out && out.suggested_extension) && typeof out.suggested_extension === 'object' ? out.suggested_extension : {}
+        if (Object.keys(suggestedExt).length > 0) {
+          setData.extensionValues = { ...(this.data.extensionValues || {}), ...suggestedExt }
+          const baseFields = this.data.extensionFields || []
+          const existingNames = baseFields.map((f) => f.name)
+          const toAdd = DEFAULT_EXTENSION_FIELD_CONFIGS.filter(
+            (d) => suggestedExt[d.name] !== undefined && existingNames.indexOf(d.name) === -1
+          )
+          if (toAdd.length > 0) setData.extensionFields = baseFields.concat(toAdd)
+        }
+        this.setData(setData)
+        wx.showToast({ title: Object.keys(suggestedExt).length > 0 ? '已提取文字并识别日期' : '已提取文字', icon: 'success' })
       } else {
         wx.showToast({ title: '未识别到文字', icon: 'none' })
       }
@@ -266,21 +303,37 @@ Page({
   },
 
   async recognizeExtensionVoice(filePath) {
+    wx.showLoading({ title: '识别中...', mask: true })
     try {
-      wx.showLoading({ title: '识别中...' })
-      const result = await api.uploadVoice(filePath)
-      wx.hideLoading()
+      const result = await api.uploadVoice(filePath, 'store')
       const text = (result && result.text && String(result.text).trim()) || ''
       if (text) {
-        this.setData({
-          extensionVoiceText: text,
-          showExtensionVoiceResult: true
-        })
-        wx.showToast({ title: '已识别', icon: 'success' })
+        const updates = { extensionVoiceText: text, showExtensionVoiceResult: true }
+        if (result.entities) {
+          const extKeys = ['expire_date', 'production_date', 'shelf_life_days', 'open_date', 'open_shelf_life', 'warranty_date']
+          const entityExt = {}
+          extKeys.forEach((k) => {
+            if (result.entities[k] !== undefined && result.entities[k] !== null && result.entities[k] !== '') {
+              entityExt[k] = result.entities[k]
+            }
+          })
+          if (Object.keys(entityExt).length > 0) {
+            updates.extensionValues = { ...(this.data.extensionValues || {}), ...entityExt }
+            const baseFields = this.data.extensionFields || []
+            const existingNames = baseFields.map((f) => f.name)
+            const toAdd = DEFAULT_EXTENSION_FIELD_CONFIGS.filter(
+              (d) => entityExt[d.name] !== undefined && existingNames.indexOf(d.name) === -1
+            )
+            if (toAdd.length > 0) updates.extensionFields = baseFields.concat(toAdd)
+          }
+        }
+        this.setData(updates)
+        wx.showToast({ title: updates.extensionValues ? '已识别（含日期）' : '已识别', icon: 'success' })
       }
     } catch (err) {
-      wx.hideLoading()
       console.error('扩展语音识别失败', err)
+    } finally {
+      wx.hideLoading()
     }
   },
 
@@ -292,6 +345,7 @@ Page({
    * 语音识别（主表单）
    */
   async recognizeVoice(filePath) {
+    wx.showLoading({ title: '识别中...', mask: true })
     try {
       const result = await api.uploadVoice(filePath, 'store')
       const text = (result && result.text && String(result.text).trim()) || ''
@@ -299,10 +353,11 @@ Page({
         const updates = { voiceResultText: text, showVoiceResult: true }
         let toastTitle = '已识别'
         if (result.entities) {
-          const itemName = result.entities.item_name || ''
-          const location = result.entities.location || ''
-          const description = result.entities.description || result.text
-          const categoryName = result.entities.category_name || ''
+          const e = result.entities
+          const itemName = e.item_name || ''
+          const location = e.location || ''
+          const description = e.description || result.text
+          const categoryName = e.category_name || ''
           if (itemName) updates['formData.name'] = itemName
           if (location) updates['formData.location'] = location
           if (description) updates['formData.description'] = description
@@ -320,6 +375,21 @@ Page({
             updates.suggestedCategoryName = categoryName
             toastTitle = '已识别，含分类建议'
           }
+          const extKeys = ['expire_date', 'production_date', 'shelf_life_days', 'open_date', 'open_shelf_life', 'warranty_date']
+          const entityExt = {}
+          extKeys.forEach((k) => {
+            if (e[k] !== undefined && e[k] !== null && e[k] !== '') entityExt[k] = e[k]
+          })
+          if (Object.keys(entityExt).length > 0) {
+            updates.extensionValues = { ...(this.data.extensionValues || {}), ...entityExt }
+            toastTitle = '已识别（含过期/保修日期）'
+            const baseFields = updates.extensionFields !== undefined ? updates.extensionFields : (this.data.extensionFields || [])
+            const existingNames = baseFields.map((f) => f.name)
+            const toAdd = DEFAULT_EXTENSION_FIELD_CONFIGS.filter(
+              (d) => entityExt[d.name] !== undefined && existingNames.indexOf(d.name) === -1
+            )
+            updates.extensionFields = baseFields.concat(toAdd)
+          }
         }
         this.setData(updates)
         wx.showToast({ title: toastTitle, icon: 'success' })
@@ -330,6 +400,8 @@ Page({
       console.error('语音识别失败', err)
       const msg = (err && err.message) || '识别失败'
       wx.showToast({ title: msg, icon: 'none' })
+    } finally {
+      wx.hideLoading()
     }
   },
 

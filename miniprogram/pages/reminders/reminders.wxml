@@ -1,26 +1,30 @@
-<!--提醒列表页-->
+<!-- 智能提醒列表页 - 布局与首页智能提醒一致 -->
 <view class="container">
   <view wx:if="{{reminders.length === 0 && !loading}}" class="empty">
-    <text class="empty-icon">✅</text>
+    <view class="empty-icon-wrap">
+      <text class="empty-icon">🔔</text>
+    </view>
     <text class="empty-text">暂无待处理提醒</text>
   </view>
-  
+
   <view class="reminder-list">
     <view class="reminder-card {{item.level}}" wx:for="{{reminders}}" wx:key="id">
       <view class="reminder-header">
-        <text class="reminder-title">{{item.title}}</text>
-        <text class="reminder-level">{{item.level === 'urgent' ? '紧急' : item.level === 'warning' ? '待处理' : '一般'}}</text>
-      </view>
-      <view class="reminder-body">
-        <text class="reminder-content">{{item.content}}</text>
-        <view class="reminder-item" wx:if="{{item.item_name}}">
-          <text>{{item.item_name}} - {{item.item_location}}</text>
+        <view class="reminder-icon">
+          <image wx:if="{{item.item_photo_display}}" class="reminder-icon-img" src="{{item.item_photo_display}}" mode="aspectFill" />
+          <text wx:else>{{item.icon || '📌'}}</text>
         </view>
+        <view class="reminder-header-text">
+          <text class="reminder-title">{{item.display_title || item.title || item.item_name || '提醒'}}</text>
+          <text class="reminder-expire-date" wx:if="{{item.expire_at_display}}">过期时间：{{item.expire_at_display}}</text>
+        </view>
+        <text class="reminder-time" wx:if="{{item.time_label}}">{{item.time_label}}</text>
       </view>
+      <view class="reminder-content" wx:if="{{item.display_content || item.content}}">{{item.display_content || item.content}}</view>
       <view class="reminder-actions">
-        <text class="action-btn" data-id="{{item.id}}" data-action="done" bindtap="onHandle">处理</text>
-        <text class="action-btn" data-id="{{item.id}}" data-action="defer" bindtap="onHandle">延期</text>
-        <text class="action-btn ignore" data-id="{{item.id}}" data-action="ignore" bindtap="onHandle">忽略</text>
+        <button class="reminder-btn primary" data-id="{{item.id}}" data-action="done" bindtap="onHandle">✅ 已处理</button>
+        <button wx:if="{{item.level === 'urgent'}}" class="reminder-btn secondary" data-id="{{item.id}}" data-action="defer" bindtap="onHandle">⏰ 延期</button>
+        <button wx:else class="reminder-btn secondary" data-id="{{item.id}}" data-action="ignore" bindtap="onHandle">❌ 忽略</button>
       </view>
     </view>
   </view>

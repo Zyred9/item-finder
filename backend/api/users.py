@@ -56,7 +56,6 @@ async def update_user(
         db,
         user_id,
         nickname=request.nickname,
-        avatar_url=request.avatar_url,
         remark=request.remark,
     )
 

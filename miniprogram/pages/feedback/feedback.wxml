@@ -1,0 +1,36 @@
+<view class="container">
+  <view class="feedback-header">
+    <text class="feedback-header-title">帮助与反馈</text>
+    <text class="feedback-header-desc">遇到问题或有建议？写下你的反馈，我们会认真处理。</text>
+  </view>
+  <view class="form-card">
+    <view class="form-item">
+      <text class="form-label">反馈内容 <text class="required">*</text></text>
+      <textarea
+        class="form-textarea"
+        placeholder="请描述你遇到的问题或建议（必填）"
+        value="{{content}}"
+        maxlength="2000"
+        show-confirm-bar="{{false}}"
+        bindinput="onContentInput"
+      />
+      <text class="form-count">{{content.length}}/2000</text>
+    </view>
+    <view class="form-item">
+      <text class="form-label">联系方式（选填）</text>
+      <input
+        class="form-input"
+        placeholder="手机/微信等，方便我们回复"
+        value="{{contact}}"
+        maxlength="100"
+        bindinput="onContactInput"
+      />
+    </view>
+    <button
+      class="submit-btn"
+      loading="{{submitting}}"
+      disabled="{{submitting || !canSubmit}}"
+      bindtap="onSubmit"
+    >提交反馈</button>
+  </view>
+</view>

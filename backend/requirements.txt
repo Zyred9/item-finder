@@ -27,3 +27,6 @@ silk-python>=0.2.8
 # 文件上传（兼容旧环境，保持版本一致）
 python-multipart>=0.0.9
 aiofiles==23.2.1
+
+# 定时任务
+apscheduler>=3.10.0

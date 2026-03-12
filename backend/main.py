@@ -4,7 +4,11 @@ FastAPI + SQLite + SQLAlchemy
 """
 import time
 
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
+
+from models.base import SessionLocal
+from services import ReminderService
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -19,6 +23,7 @@ from api import (
     chat_router,
     debug_router,
     users_router,
+    feedback_router,
 )
 
 # 创建应用
@@ -51,6 +56,7 @@ app.include_router(reminders_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(debug_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
+app.include_router(feedback_router, prefix="/api")
 
 
 @app.middleware("http")
@@ -84,11 +90,28 @@ def health_check():
     return {"status": "ok"}
 
 
+def _job_refresh_reminders():
+    """每日 00:00 执行：刷新待处理提醒的剩余天数、标题、级别、内容"""
+    db = SessionLocal()
+    try:
+        n = ReminderService.refresh_pending_reminders(db)
+        if n > 0:
+            print(f"[cron] 已刷新 {n} 条智能提醒")
+    except Exception as e:
+        print(f"[cron] 刷新智能提醒失败: {e}")
+    finally:
+        db.close()
+
+
 # 启动事件
 @app.on_event("startup")
 async def startup_event():
     """应用启动时初始化"""
     init_db()
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(_job_refresh_reminders, "cron", hour=0, minute=0)
+    scheduler.start()
+    print("✅ 定时任务已注册：每日 00:00 刷新智能提醒")
     print(f"✅ {settings.APP_NAME} API 启动成功")
     print(f"📖 API 文档: http://localhost:8000/docs")
 

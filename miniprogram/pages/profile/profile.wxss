@@ -47,6 +47,18 @@
   height: 96rpx;
 }
 
+.profile-avatar-img-wechat {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.profile-avatar-text {
+  font-size: 72rpx;
+  color: #ff6b5b;
+  font-weight: 600;
+}
+
 .profile-name {
   font-size: 44rpx;
   font-weight: 700;
@@ -127,10 +139,6 @@
 
 .menu-icon.notification {
   background: linear-gradient(135deg, #e8f9f5, #d0f0e5);
-}
-
-.menu-icon.privacy {
-  background: linear-gradient(135deg, #f0f7ff, #e0efff);
 }
 
 .menu-icon.help {

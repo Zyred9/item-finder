@@ -11,28 +11,43 @@
 
   <view class="item-list" wx:if="{{!loading && items.length > 0}}">
     <view
-      class="item-card"
+      class="item-row"
       wx:for="{{items}}"
       wx:key="id"
-      bindtap="onItemTap"
+      catchtouchstart="onItemTouchStart"
+      catchtouchmove="onItemTouchMove"
+      catchtouchend="onItemTouchEnd"
       data-id="{{item.id}}"
     >
-      <image
-        wx:if="{{item.photo_path}}"
-        class="item-image"
-        src="{{item.photo_path}}"
-        mode="aspectFill"
-      />
-      <view wx:else class="item-image item-image-placeholder">
-        <image class="item-placeholder-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+      <view class="item-actions item-actions-bg">
+        <view class="item-delete" data-id="{{item.id}}" catchtap="onDeleteTap">删除</view>
       </view>
-      <view class="item-info">
-        <view class="item-name">{{item.name}}</view>
-        <view class="item-location">📍 {{item.location}}</view>
-        <view class="item-meta">
-          <text>{{item.creator_name || '我'}}</text>
-          <text class="dot"></text>
-          <text>{{item.created_at}}</text>
+      <view
+        class="item-card {{swipingItemId === item.id && swipeTransition ? 'item-card-transition' : ''}}"
+        style="transform: translateX({{swipingItemId === item.id ? swipeOffset : 0}}px)"
+        bindtap="onItemTap"
+        data-id="{{item.id}}"
+      >
+        <image
+          wx:if="{{item.photo_path}}"
+          class="item-image"
+          src="{{item.photo_path}}"
+          mode="aspectFill"
+        />
+        <view wx:else class="item-image item-image-placeholder">
+          <image class="item-placeholder-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+        </view>
+        <view class="item-info">
+          <view class="item-name">{{item.name}}</view>
+          <view class="item-location">📍 {{item.location}}</view>
+          <view class="item-meta">
+            <text>{{item.creator_name || '我'}}</text>
+            <text class="dot"></text>
+            <text>{{item.created_at}}</text>
+          </view>
+        </view>
+        <view class="item-actions item-actions-inline">
+          <view class="item-delete" data-id="{{item.id}}" catchtap="onDeleteTap">🗑️</view>
         </view>
       </view>
     </view>

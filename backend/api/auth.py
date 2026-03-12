@@ -43,17 +43,18 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     user = UserService.get_by_openid(db, openid)
     
     if not user:
-        # 新用户，创建临时用户记录（还没有家庭）
+        # 新用户，创建临时用户记录（还没有家庭），头像和昵称从微信拉取
         user = User(
             wechat_openid=openid,
-            nickname=f"用户{openid[-6:]}",
+            nickname=request.nickname or f"用户{openid[-6:]}",
+            avatar_url=request.avatar_url,
             family_id=None,
             is_admin=False
         )
         db.add(user)
         db.commit()
         db.refresh(user)
-        
+
         return Response(data=LoginResponse(
             user_id=int(user.id),
             nickname=user.nickname,
@@ -62,6 +63,15 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             family_name=None,
             openid=openid
         ))
+
+    # 老用户：用微信拉取的昵称/头像更新（仅登录时同步，不支持在别处修改）
+    if request.nickname is not None or request.avatar_url is not None:
+        if request.nickname is not None:
+            user.nickname = request.nickname
+        if request.avatar_url is not None:
+            user.avatar_url = request.avatar_url
+        db.commit()
+        db.refresh(user)
 
     family_info = UserService.get_family_info(db, user.id) if user.family_id else None
 

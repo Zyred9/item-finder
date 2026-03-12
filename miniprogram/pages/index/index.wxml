@@ -1,4 +1,5 @@
-<!-- 首页 - 参考设计原型 v3 -->
+<!-- 首页 - 参考设计原型 v3，使用 scroll-view 保证真机可正常上下滑动 -->
+<scroll-view scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}" class="page-scroll" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresherRefresh">
 <view class="container">
   <!-- 头部 -->
   <view class="home-header">
@@ -42,8 +43,8 @@
     </view>
   </view>
 
-  <!-- 智能提醒（与原型一致：标题+数量+查看全部，卡片左色条+icon+标题+时间+内容+操作） -->
-  <view class="section" wx:if="{{reminders.length > 0}}">
+  <!-- 智能提醒：与最近存放同级别，仅展示离过期时间最近的 3 条 -->
+  <view class="section" wx:if="{{displayReminders.length > 0}}">
     <view class="section-header">
       <view class="section-title">
         <text>智能提醒</text>
@@ -53,29 +54,32 @@
     </view>
 
     <view class="reminder-list">
-      <view class="reminder-card {{item.level}}" wx:for="{{reminders}}" wx:key="id">
+      <view class="reminder-card {{item.level}}" wx:for="{{displayReminders}}" wx:key="id">
         <view class="reminder-header">
           <view class="reminder-icon">{{item.icon || '📌'}}</view>
-          <text class="reminder-title">{{item.title || item.item_name || '提醒'}}</text>
+          <view class="reminder-header-text">
+            <text class="reminder-title">{{item.display_title || item.title || item.item_name || '提醒'}}</text>
+            <text class="reminder-expire-date" wx:if="{{item.expire_at_display}}">过期时间：{{item.expire_at_display}}</text>
+          </view>
           <text class="reminder-time" wx:if="{{item.time_label}}">{{item.time_label}}</text>
         </view>
         <view class="reminder-content" wx:if="{{item.display_content || item.content}}">{{item.display_content || item.content}}</view>
-        <view class="reminder-actions">
+        <!-- <view class="reminder-actions">
           <button class="reminder-btn primary" data-id="{{item.id}}" data-action="done" bindtap="onHandleReminder">✅ 已处理</button>
           <button wx:if="{{item.level === 'urgent'}}" class="reminder-btn secondary" data-id="{{item.id}}" data-action="defer" bindtap="onHandleReminder">⏰ 延期</button>
           <button wx:else class="reminder-btn secondary" data-id="{{item.id}}" data-action="ignore" bindtap="onHandleReminder">❌ 忽略</button>
-        </view>
+        </view> -->
       </view>
     </view>
   </view>
 
-  <!-- 最近存放 -->
+  <!-- 最近存放：与智能提醒同级别 -->
   <view class="section">
     <view class="section-header">
       <view class="section-title">
         <text>最近存放</text>
       </view>
-      <text class="section-more" bindtap="onViewAllItems">全部 ›</text>
+      <text class="section-more" bindtap="onViewAllItems">查看全部 ›</text>
     </view>
 
     <view class="empty-state" wx:if="{{recentItems.length === 0 && !loading}}">
@@ -101,3 +105,4 @@
     </view>
   </view>
 </view>
+</scroll-view>

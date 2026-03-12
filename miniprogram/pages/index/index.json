@@ -1,5 +1,5 @@
 {
   "navigationBarTitleText": "寻物记",
-  "enablePullDownRefresh": true,
+  "enablePullDownRefresh": false,
   "usingComponents": {}
 }

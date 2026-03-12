@@ -15,9 +15,8 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    """更新用户"""
+    """更新用户（头像仅支持从微信登录时拉取，此处不可修改）"""
     nickname: Optional[str] = Field(None, max_length=50)
-    avatar_url: Optional[str] = Field(None, max_length=500)
     remark: Optional[str] = Field(None, max_length=100, description="家庭内备注名")
 
 
@@ -39,6 +38,8 @@ class UserResponse(BaseModel):
 class LoginRequest(BaseModel):
     """登录请求"""
     code: str = Field(..., description="微信登录code")
+    nickname: Optional[str] = Field(None, max_length=50, description="微信昵称（从微信拉取，仅登录时写入）")
+    avatar_url: Optional[str] = Field(None, max_length=500, description="微信头像URL（从微信拉取，仅登录时写入，不支持修改）")
 
 
 class LoginResponse(BaseModel):

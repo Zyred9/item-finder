@@ -26,12 +26,12 @@ def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -
 @router.get("", response_model=Response[ReminderListResponse])
 async def get_reminders(
     family_id: int,
-    status: Optional[str] = None,
+    status: Optional[str] = "pending",
     level: Optional[str] = None,
     user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """获取提醒列表"""
+    """获取提醒列表，默认仅返回待处理(pending)，不包含已处理/忽略/延期"""
     reminders, counts = ReminderService.get_by_family(
         db, family_id, status=status, level=level
     )

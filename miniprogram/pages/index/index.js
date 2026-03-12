@@ -11,9 +11,11 @@ Page({
     searchKeyword: '',
     recentItems: [],
     reminders: [],
+    displayReminders: [],
     urgentCount: 0,
     warningCount: 0,
-    loading: true
+    loading: true,
+    refreshing: false
   },
 
   onLoad() {
@@ -89,6 +91,12 @@ Page({
 
       const rawReminders = remindersData.reminders || []
       const reminders = rawReminders.map((r) => this.normalizeReminder(r))
+      const sortedByExpiry = reminders.slice().sort((a, b) => {
+        const da = a.days_left != null ? a.days_left : 999999
+        const db = b.days_left != null ? b.days_left : 999999
+        return da - db
+      })
+      const displayReminders = sortedByExpiry.slice(0, 3)
       const recentItems = (itemsData.items || []).map((it) => ({
         ...it,
         photo_path: api.resolveStaticUrl(it.photo_path)
@@ -97,6 +105,7 @@ Page({
       this.setData({
         recentItems,
         reminders,
+        displayReminders,
         urgentCount: remindersData.urgent_count || 0,
         warningCount: remindersData.warning_count || 0,
         familyName: familyData.name || '我的家',
@@ -181,14 +190,34 @@ Page({
     } else if (item.expire_at) {
       timeLabel = String(item.expire_at)
     }
+    const rawDate = item.expire_at || item.remind_at
+    let expire_at_display = ''
+    if (rawDate) {
+      const d = new Date(rawDate)
+      if (!isNaN(d.getTime())) {
+        expire_at_display = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+      } else {
+        expire_at_display = String(rawDate)
+      }
+    }
+    let displayTitle = item.title || item.item_name || '提醒'
+    if (item.days_left != null && item.days_left > 30 && displayTitle) {
+      if (displayTitle.indexOf('即将过期') !== -1) displayTitle = displayTitle.replace('即将过期', '过期提醒')
+      else if (displayTitle.indexOf('开封后即将过期') !== -1) displayTitle = displayTitle.replace('开封后即将过期', '开封后保质提醒')
+      else if (displayTitle.indexOf('保修即将到期') !== -1) displayTitle = displayTitle.replace('保修即将到期', '保修到期提醒')
+    }
     const loc = item.item_location ? `📍 ${item.item_location}` : ''
-    const tail = item.content || (item.expire_at ? `${item.expire_at} 过期` : '')
+    const tail = item.content || (expire_at_display ? `${expire_at_display} 过期` : '')
     const displayContent = [loc, tail].filter(Boolean).join(' · ')
+    const item_photo_display = (item.item_photo && api.resolveStaticUrl(item.item_photo)) || ''
     return {
       ...item,
       icon: item.icon || iconMap[level],
       time_label: timeLabel || (item.time_label || ''),
-      display_content: displayContent || item.content || ''
+      expire_at_display: expire_at_display,
+      display_content: displayContent || item.content || '',
+      display_title: displayTitle,
+      item_photo_display: item_photo_display
     }
   },
 
@@ -210,8 +239,17 @@ Page({
   },
 
   /**
-   * 下拉刷新
+   * 下拉刷新（scroll-view 内下拉）
    */
+  onRefresherRefresh() {
+    this.setData({ refreshing: true })
+    this.loadData().then(() => {
+      this.setData({ refreshing: false })
+    }).catch(() => {
+      this.setData({ refreshing: false })
+    })
+  },
+
   onPullDownRefresh() {
     this.loadData().then(() => {
       wx.stopPullDownRefresh()

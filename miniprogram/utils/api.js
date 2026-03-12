@@ -58,6 +58,26 @@ function request(url, method = 'GET', data = {}) {
           statusCode: res.statusCode,
           data: res.data
         })
+        const authFailDetails = ['无效的用户ID', '未登录', '登录过期', '登录已过期']
+        const detailStr = String(res.data && res.data.detail || '')
+        const messageStr = String(res.data && res.data.message || '')
+        const needReLogin = res.statusCode === 401 ||
+          (res.data && (
+            res.data.code === 401 ||
+            authFailDetails.indexOf(res.data.detail) !== -1 ||
+            (detailStr.indexOf('登录') !== -1 && detailStr.indexOf('过期') !== -1) ||
+            (messageStr.indexOf('登录') !== -1 && messageStr.indexOf('过期') !== -1)
+          ))
+        if (needReLogin) {
+          wx.removeStorageSync('userId')
+          wx.removeStorageSync('familyId')
+          wx.showToast({ title: '请重新登录', icon: 'none' })
+          setTimeout(() => {
+            wx.reLaunch({ url: '/pages/login/login' })
+          }, 800)
+          reject(new Error('未登录或登录已失效'))
+          return
+        }
         if (res.statusCode === 200 && res.data.code === 0) {
           resolve(res.data.data)
         } else if (res.data.code === 1001) {
@@ -65,7 +85,7 @@ function request(url, method = 'GET', data = {}) {
           resolve(res.data)
         } else {
           wx.showToast({
-            title: res.data.message || '请求失败',
+            title: res.data.message || res.data.detail || '请求失败',
             icon: 'none'
           })
           reject(res.data)
@@ -93,7 +113,12 @@ function request(url, method = 'GET', data = {}) {
 module.exports = {
   resolveStaticUrl,
   // ========== 认证 ==========
-  login: (code) => request('/auth/login', 'POST', { code }),
+  login: (code, userInfo) =>
+    request('/auth/login', 'POST', {
+      code,
+      nickname: userInfo && userInfo.nickName ? userInfo.nickName : undefined,
+      avatar_url: userInfo && userInfo.avatarUrl ? userInfo.avatarUrl : undefined
+    }),
 
   // ========== 家庭 ==========
   createFamily: (name) => request('/families', 'POST', { name }),
@@ -240,6 +265,10 @@ module.exports = {
     request(`/chat/history?family_id=${familyId}&session_id=${sessionId}`, 'DELETE'),
   summarizeChat: (familyId, sessionId) =>
     request('/chat/summarize', 'POST', { family_id: familyId, session_id: sessionId }),
+
+  // ========== 帮助与反馈 ==========
+  submitFeedback: (content, contact) =>
+    request('/feedback', 'POST', { content: content || '', contact: contact || '' }),
 
   // ========== 位置 ==========
   getLocations: (familyId) => request(`/locations?family_id=${familyId}`),
@@ -405,13 +434,22 @@ module.exports = {
   getUserId,
   getFamilyId,
 
-  setUserInfo: (userId, familyId) => {
+  setUserInfo: (userId, familyId, extra) => {
     wx.setStorageSync('userId', userId)
     if (familyId) wx.setStorageSync('familyId', familyId)
+    if (extra) {
+      if (extra.avatarUrl != null) wx.setStorageSync('avatarUrl', extra.avatarUrl)
+      if (extra.nickname != null) wx.setStorageSync('nickname', extra.nickname)
+    }
   },
+
+  getAvatarUrl: () => wx.getStorageSync('avatarUrl') || '',
+  getNickname: () => wx.getStorageSync('nickname') || '',
 
   clearUserInfo: () => {
     wx.removeStorageSync('userId')
     wx.removeStorageSync('familyId')
+    wx.removeStorageSync('avatarUrl')
+    wx.removeStorageSync('nickname')
   }
 }

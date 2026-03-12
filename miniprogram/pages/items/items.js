@@ -13,7 +13,10 @@ Page({
     loading: false,
     loadingMore: false,
     hasMore: true,
-    offset: 0
+    offset: 0,
+    swipingItemId: null,
+    swipeOffset: 0,
+    swipeTransition: false
   },
 
   onLoad() {
@@ -84,10 +87,105 @@ Page({
   },
 
   onItemTap(e) {
+    if (this._suppressTap) {
+      this._suppressTap = false
+      return
+    }
     const id = e.currentTarget.dataset.id
     if (id) {
       wx.navigateTo({ url: `/pages/detail/detail?id=${id}` })
     }
+  },
+
+  onItemTouchStart(e) {
+    const touch = e.touches && e.touches[0]
+    if (!touch) return
+    this._touchStartX = touch.clientX
+    this._touchStartY = touch.clientY
+    this._touchStartTime = Date.now()
+    this._suppressTap = false
+    const id = e.currentTarget.dataset.id
+    this._touchItemId = id
+    this.setData({
+      swipingItemId: id,
+      swipeOffset: 0,
+      swipeTransition: false
+    })
+  },
+
+  onItemTouchMove(e) {
+    if (this._touchStartX == null || this.data.swipingItemId !== e.currentTarget.dataset.id) return
+    const touch = e.touches && e.touches[0]
+    if (!touch) return
+    const dx = touch.clientX - this._touchStartX
+    const dy = touch.clientY - this._touchStartY
+    if (Math.abs(dx) < Math.abs(dy)) return
+    const maxLeft = -100
+    const offset = Math.max(maxLeft, Math.min(0, dx))
+    this.setData({ swipeOffset: offset })
+  },
+
+  onItemTouchEnd(e) {
+    const touch = e.changedTouches && e.changedTouches[0]
+    if (!touch || this._touchStartX == null) return
+    const dx = touch.clientX - this._touchStartX
+    const dy = touch.clientY - this._touchStartY
+    const dt = Date.now() - (this._touchStartTime || 0)
+    const id = this._touchItemId || e.currentTarget.dataset.id
+    this._touchStartX = null
+    this._touchStartY = null
+    this._touchStartTime = null
+
+    const threshold = -60
+    if (this.data.swipeOffset <= threshold) {
+      this._touchItemId = null
+      this.setData({
+        swipingItemId: null,
+        swipeOffset: 0,
+        swipeTransition: true
+      })
+      if (id) {
+        this._suppressTap = true
+        this.confirmDelete(id)
+      }
+    } else {
+      this.setData({ swipeTransition: true }, () => {
+        this.setData({ swipeOffset: 0 }, () => {
+          setTimeout(() => {
+            this.setData({
+              swipingItemId: null,
+              swipeTransition: false
+            })
+          }, 260)
+        })
+      })
+      this._touchItemId = null
+    }
+  },
+
+  onDeleteTap(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    this.confirmDelete(id)
+  },
+
+  confirmDelete(id) {
+    wx.showModal({
+      title: '删除物品',
+      content: '删除后将无法恢复，确认删除该物品？',
+      confirmColor: '#ff6b5b',
+      success: async (res) => {
+        if (!res.confirm) return
+        try {
+          await api.deleteItem(id)
+          wx.showToast({ title: '已删除', icon: 'success' })
+          this.loadFirst()
+        } catch (err) {
+          console.error('删除失败', err)
+          wx.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    })
   },
 
   onPullDownRefresh() {

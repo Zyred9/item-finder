@@ -4,7 +4,7 @@ LLM 调用服务：优先百炼 Coding Plan（OpenAI 兼容），未配置时用
 """
 import json
 import httpx
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 from config.settings import settings, get_deepseek_api_key, get_coding_plan_api_key
 
@@ -32,15 +32,19 @@ INTENT_SYSTEM = """你是「寻物记」小程序的意图解析器。用户会�
 用户：「你好」 -> {"intent": "unknown", "keyword": ""}"""
 
 STORE_VOICE_SYSTEM = """你是「寻物记」小程序的存物语音抽取器。
-用户会说一句和“存放物品”相关的话，请从中提取结构化字段。
+用户会说一句和“存放物品”相关的话，请从中提取结构化字段（含过期/保修等时间）。
 只输出一个 JSON 对象，不要其他内容。格式严格如下：
-{"item_name": "字符串或空", "location": "字符串或空", "category_name": "字符串或空", "description": "字符串或空"}
+{"item_name": "字符串或空", "location": "字符串或空", "category_name": "字符串或空", "description": "字符串或空",
+ "expire_date": "YYYY-MM-DD或空", "production_date": "YYYY-MM-DD或空", "shelf_life_days": 数字或空,
+ "open_date": "YYYY-MM-DD或空", "open_shelf_life": 数字或空, "warranty_date": "YYYY-MM-DD或空"}
 
 规则：
-- item_name：物品名称，如“护照”“吹风机”“退烧药”
-- location：存放位置，如“书房第二层抽屉”“客厅电视柜下面”
-- category_name：分类中文名称，如“证件”“电器”“药品”；无法判断则为空
-- description：保留一句简短说明；若没有额外说明，可直接复用用户原句或概括
+- item_name：物品名称；location：存放位置；category_name：分类中文名；description：简短说明
+- expire_date：过期日期，如“保质期到12月31日”“过期时间2026年3月” → 转为 YYYY-MM-DD，无法推断则空字符串
+- production_date：生产日期；shelf_life_days：保质期天数（整数）
+- open_date：开封日期；open_shelf_life：开封后保质期天数（整数）
+- warranty_date：保修到期日，如“保修到明年6月” → YYYY-MM-DD
+- 日期统一用 YYYY-MM-DD，没有则空字符串；天数为整数，没有则 null 或省略
 - 只返回 JSON，不要 markdown，不要解释
 """
 
@@ -124,12 +128,129 @@ async def parse_store_voice_entities(user_message: str) -> Dict[str, str]:
     except json.JSONDecodeError:
         raise ValueError("LLM 返回非 JSON")
 
-    return {
+    def _date(s: Any) -> str:
+        if s is None or s == "":
+            return ""
+        s = str(s).strip()
+        if not s or s.lower() in ("null", "none"):
+            return ""
+        return s
+
+    def _int(s: Any) -> Optional[int]:
+        if s is None or s == "":
+            return None
+        try:
+            return int(s)
+        except (TypeError, ValueError):
+            return None
+
+    out = {
         "item_name": (parsed.get("item_name") or "").strip(),
         "location": (parsed.get("location") or "").strip(),
         "category_name": (parsed.get("category_name") or "").strip(),
         "description": (parsed.get("description") or "").strip(),
+        "expire_date": _date(parsed.get("expire_date")),
+        "production_date": _date(parsed.get("production_date")),
+        "shelf_life_days": _int(parsed.get("shelf_life_days")),
+        "open_date": _date(parsed.get("open_date")),
+        "open_shelf_life": _int(parsed.get("open_shelf_life")),
+        "warranty_date": _date(parsed.get("warranty_date")),
     }
+    # 日志：存物语音实体抽取结果
+    try:
+        print("[llm] store_voice_entities:", json.dumps(out, ensure_ascii=False))
+    except Exception:
+        print("[llm] store_voice_entities (raw):", out)
+    return out
+
+
+EXTRACT_EXTENSION_SYSTEM = """你从一段文字（可能来自说明书、药盒、发票、证件等）中提取与「保质/过期/保修」相关的日期与数字。
+只输出一个 JSON 对象，不要其他内容。格式严格如下：
+{"expire_date": "YYYY-MM-DD或空", "production_date": "YYYY-MM-DD或空", "shelf_life_days": 数字或null,
+ "open_date": "YYYY-MM-DD或空", "open_shelf_life": 数字或null, "warranty_date": "YYYY-MM-DD或空"}
+
+规则：
+- expire_date：过期日期、保质期至、有效期至、Use by 等；production_date：生产日期、生产批号对应日期
+- shelf_life_days：保质期天数（如 365、24个月按 730）；没有则 null
+- open_date：开封日期；open_shelf_life：开封后保质期天数（如开封后28天）
+- warranty_date：保修至、保修期至、保修到期
+- 日期统一 YYYY-MM-DD，无法推断则空字符串；只返回 JSON
+"""
+
+
+async def extract_extension_from_text(text: str) -> Dict[str, Any]:
+    """
+    从 OCR 等文本中抽取过期/生产/保修相关字段，供存物扩展信息自动填充。
+    """
+    api_key = get_deepseek_api_key()
+    if not api_key:
+        return {}
+    message = (text or "").strip()[:3000]
+    if not message:
+        return {}
+
+    url = _chat_completions_url(settings.DEEPSEEK_BASE_URL.rstrip("/"))
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    body: Dict[str, Any] = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [
+            {"role": "system", "content": EXTRACT_EXTENSION_SYSTEM},
+            {"role": "user", "content": message},
+        ],
+        "max_tokens": 256,
+        "temperature": 0.1,
+        "response_format": {"type": "json_object"},
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(url, json=body, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+    except Exception:
+        return {}
+
+    choice = (data.get("choices") or [None])[0]
+    if not choice:
+        return {}
+    content = (choice.get("message") or {}).get("content") or "{}"
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError:
+        return {}
+
+    def _d(s: Any) -> str:
+        if s is None or s == "":
+            return ""
+        s = str(s).strip()
+        return s if s and s.lower() not in ("null", "none") else ""
+
+    def _n(s: Any) -> Optional[int]:
+        if s is None or s == "":
+            return None
+        try:
+            return int(s)
+        except (TypeError, ValueError):
+            return None
+
+    out: Dict[str, Any] = {}
+    if _d(parsed.get("expire_date")):
+        out["expire_date"] = _d(parsed.get("expire_date"))
+    if _d(parsed.get("production_date")):
+        out["production_date"] = _d(parsed.get("production_date"))
+    if _n(parsed.get("shelf_life_days")) is not None:
+        out["shelf_life_days"] = _n(parsed.get("shelf_life_days"))
+    if _d(parsed.get("open_date")):
+        out["open_date"] = _d(parsed.get("open_date"))
+    if _n(parsed.get("open_shelf_life")) is not None:
+        out["open_shelf_life"] = _n(parsed.get("open_shelf_life"))
+    if _d(parsed.get("warranty_date")):
+        out["warranty_date"] = _d(parsed.get("warranty_date"))
+    # 日志：OCR 文本扩展字段抽取结果
+    try:
+        print("[llm] extract_extension_from_text:", json.dumps(out, ensure_ascii=False))
+    except Exception:
+        print("[llm] extract_extension_from_text (raw):", out)
+    return out
 
 
 async def summarize_chat(messages: List[Dict[str, str]]) -> str:

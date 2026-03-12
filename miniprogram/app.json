@@ -8,6 +8,7 @@
     "pages/items/items",
     "pages/reminders/reminders",
     "pages/profile/profile",
+    "pages/feedback/feedback",
     "pages/login/login"
   ],
   "window": {

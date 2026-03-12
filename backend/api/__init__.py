@@ -6,6 +6,7 @@ from .reminders import router as reminders_router
 from .chat import router as chat_router
 from .debug import router as debug_router
 from .users import router as users_router
+from .feedback import router as feedback_router
 
 __all__ = [
     "auth_router",
@@ -16,4 +17,5 @@ __all__ = [
     "chat_router",
     "debug_router",
     "users_router",
+    "feedback_router",
 ]

@@ -34,7 +34,7 @@ def get_db() -> Generator[Session, None, None]:
 def init_db():
     """初始化数据库（创建所有表 + 初始化默认数据）"""
     # 导入所有模型，确保它们被注册
-    from models import User, Family, Item, ItemExtension, Category, Location, Reminder, ChatMessage
+    from models import User, Family, Item, ItemExtension, Category, Location, Reminder, ChatMessage, Feedback
     
     # 创建所有表
     Base.metadata.create_all(bind=engine)

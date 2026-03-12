@@ -8,6 +8,7 @@ Page({
     userInfo: null,
     familyInfo: null,
     userName: '我',
+    avatarUrl: '',
     avatarText: '',
     familyName: '',
     roleText: '',
@@ -31,12 +32,11 @@ Page({
       return
     }
 
-    const app = getApp()
-    const globalFamily = (app.globalData && app.globalData.familyInfo) || null
-    const userName = (globalFamily && globalFamily.nickname) || '我'
-    const avatarText = userName !== '我' && userName.length > 0 ? userName[0] : ''
+    const userName = api.getNickname() || '我'
+    const avatarUrl = api.getAvatarUrl() || ''
+    const avatarText = !avatarUrl && userName !== '我' && userName.length > 0 ? userName[0] : ''
 
-    this.setData({ userName: userName || '我', avatarText })
+    this.setData({ userName: userName || '我', avatarUrl, avatarText })
 
     if (!familyId) {
       this.setData({ familyName: '', roleText: '', memberCount: 0 })
@@ -72,16 +72,12 @@ Page({
     wx.navigateTo({ url: '/pages/reminders/reminders' })
   },
 
-  onPrivacy() {
-    wx.showToast({ title: '功能开发中', icon: 'none' })
-  },
-
   onStats() {
     wx.switchTab({ url: '/pages/index/index' })
   },
 
   onHelp() {
-    wx.showToast({ title: '功能开发中', icon: 'none' })
+    wx.navigateTo({ url: '/pages/feedback/feedback' })
   },
 
   onAbout() {
