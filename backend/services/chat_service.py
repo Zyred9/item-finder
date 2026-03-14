@@ -14,6 +14,14 @@ from services.llm_service import parse_find_intent
 class ChatService:
     """对话业务逻辑"""
 
+    LOCATION_QUERY_TOKENS = (
+        "有什么东西",
+        "里面有什么",
+        "里有什么",
+        "有什么",
+        "有啥",
+    )
+
     @staticmethod
     def create_session() -> str:
         """创建新会话"""
@@ -40,6 +48,10 @@ class ChatService:
             intent, matched_items, reply = ChatService._apply_parsed_intent(
                 db, family_id, parsed
             )
+            if intent == "unknown":
+                intent, matched_items, reply = ChatService._process_intent(
+                    db, family_id, message
+                )
         except Exception:
             intent, matched_items, reply = ChatService._process_intent(
                 db, family_id, message
@@ -86,21 +98,45 @@ class ChatService:
     @staticmethod
     def _process_intent(db: Session, family_id: int, message: str) -> tuple[str, list, str]:
         """规则兜底：DeepSeek 不可用时的关键词匹配"""
-        msg = message or ""
+        msg = (message or "").strip()
 
-        if "在哪" in msg or "在哪里" in msg or "位置" in msg or "放在哪" in msg:
-            keyword = msg.replace("在哪", "").replace("在哪里", "").replace("放在哪", "").strip()
-            if keyword:
-                items = ItemService.search(db, family_id, keyword, limit=5)
-                if items:
-                    reply = ChatService._format_search_result(items)
-                    return "search", ChatService._items_to_dict(items), reply
-                return "search", [], f"没找到「{keyword}」相关的物品"
+        keyword = ChatService._extract_search_keyword(msg)
+        if keyword:
+            items = ItemService.search(db, family_id, keyword, limit=5)
+            if items:
+                reply = ChatService._format_search_result(items)
+                return "search", ChatService._items_to_dict(items), reply
+            return "search", [], f"没找到「{keyword}」相关的物品"
 
         if "过期" in msg:
             return "query_expire", [], "暂未实现过期查询功能"
 
         return "unknown", [], "抱歉，我没听懂你的意思。你可以试着问我「某某东西在哪」"
+
+    @staticmethod
+    def _extract_search_keyword(message: str) -> str:
+        msg = (message or "").strip()
+        if not msg:
+            return ""
+
+        if "在哪" in msg or "在哪里" in msg or "位置" in msg or "放在哪" in msg:
+            keyword = (
+                msg.replace("在哪里", "")
+                .replace("放在哪", "")
+                .replace("在哪", "")
+                .replace("位置", "")
+                .strip()
+            )
+            return keyword.strip("？?。！!，,、 ")
+
+        if any(token in msg for token in ChatService.LOCATION_QUERY_TOKENS):
+            keyword = msg
+            for token in ChatService.LOCATION_QUERY_TOKENS:
+                keyword = keyword.replace(token, "")
+            keyword = keyword.replace("里", "").replace("中", "").strip()
+            return keyword.strip("？?。！!，,、 ")
+
+        return ""
     
     @staticmethod
     def _format_search_result(items: List[Item]) -> str:

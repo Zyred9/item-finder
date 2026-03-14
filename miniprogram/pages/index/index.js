@@ -97,10 +97,14 @@ Page({
         return da - db
       })
       const displayReminders = sortedByExpiry.slice(0, 3)
-      const recentItems = (itemsData.items || []).map((it) => ({
-        ...it,
-        photo_path: api.resolveStaticUrl(it.photo_path)
-      }))
+      const recentItems = (itemsData.items || []).map((it) => {
+        const raw = it.created_at || ''
+        const d = new Date(raw)
+        const created_at_label = isNaN(d.getTime())
+          ? raw.replace('T', ' ').slice(0, 16)
+          : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+        return { ...it, photo_path: api.resolveStaticUrl(it.photo_path), created_at_label }
+      })
 
       this.setData({
         recentItems,
@@ -200,12 +204,7 @@ Page({
         expire_at_display = String(rawDate)
       }
     }
-    let displayTitle = item.title || item.item_name || '提醒'
-    if (item.days_left != null && item.days_left > 30 && displayTitle) {
-      if (displayTitle.indexOf('即将过期') !== -1) displayTitle = displayTitle.replace('即将过期', '过期提醒')
-      else if (displayTitle.indexOf('开封后即将过期') !== -1) displayTitle = displayTitle.replace('开封后即将过期', '开封后保质提醒')
-      else if (displayTitle.indexOf('保修即将到期') !== -1) displayTitle = displayTitle.replace('保修即将到期', '保修到期提醒')
-    }
+    const displayTitle = item.title || item.item_name || '提醒'
     const loc = item.item_location ? `📍 ${item.item_location}` : ''
     const tail = item.content || (expire_at_display ? `${expire_at_display} 过期` : '')
     const displayContent = [loc, tail].filter(Boolean).join(' · ')

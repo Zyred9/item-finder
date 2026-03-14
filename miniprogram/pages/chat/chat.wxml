@@ -64,7 +64,10 @@
                 bindtap="onItemClick"
                 data-id="{{mi.id}}"
               >
-                <view class="result-icon">{{mi.icon || '📦'}}</view>
+                <image wx:if="{{mi.photo_path}}" class="result-image" src="{{mi.photo_path}}" mode="aspectFill" />
+                <view wx:else class="result-image result-image-placeholder">
+                  <image class="result-placeholder-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+                </view>
                 <view class="result-info">
                   <view class="result-name-row">
                     <view class="result-name">{{mi.name}}</view>
@@ -74,20 +77,6 @@
                     {{mi.creator_name || '我'}} · {{mi.created_at}}
                   </view>
                 </view>
-              </view>
-            </view>
-
-            <view class="result-actions" wx:if="{{item.actions && item.actions.length > 0}}">
-              <view
-                class="result-action-btn {{action.variant === 'primary' ? 'primary' : 'secondary'}}"
-                wx:for="{{item.actions}}"
-                wx:for-item="action"
-                wx:key="type"
-                bindtap="onActionClick"
-                data-type="{{action.type}}"
-              >
-                <text class="action-icon">{{action.icon}}</text>
-                <text>{{action.label}}</text>
               </view>
             </view>
           </view>

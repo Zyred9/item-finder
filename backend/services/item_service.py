@@ -31,9 +31,10 @@ class ItemService:
         db.add(item)
         db.flush()  # 获取 item.id
         
-        # 创建扩展信息
+        # 创建扩展信息（空字符串转 None，避免 MySQL DATE 列报错）
         if extension_data:
-            extension = ItemExtension(item_id=item.id, **extension_data)
+            clean = {k: (None if v == '' else v) for k, v in extension_data.items()}
+            extension = ItemExtension(item_id=item.id, **clean)
             db.add(extension)
 
         db.commit()
@@ -89,14 +90,15 @@ class ItemService:
             if hasattr(item, key) and value is not None:
                 setattr(item, key, value)
         
-        # 更新扩展信息
+        # 更新扩展信息（空字符串转 None，避免 MySQL DATE 列报错）
         if extension_data:
+            clean_ext = {k: (None if v == '' else v) for k, v in extension_data.items()}
             if item.extension:
-                for key, value in extension_data.items():
+                for key, value in clean_ext.items():
                     if hasattr(item.extension, key):
                         setattr(item.extension, key, value)
             else:
-                extension = ItemExtension(item_id=item.id, **extension_data)
+                extension = ItemExtension(item_id=item.id, **clean_ext)
                 db.add(extension)
         
         item.updated_at = datetime.now()

@@ -98,7 +98,7 @@
           <view class="item-meta">
             <text>{{item.creator_name || '我'}}</text>
             <text class="dot"></text>
-            <text>{{item.created_at}}</text>
+            <text>{{item.created_at_label}}</text>
           </view>
         </view>
       </view>

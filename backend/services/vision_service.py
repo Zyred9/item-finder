@@ -13,7 +13,20 @@ from config.settings import settings
 # 百炼 OpenAI 兼容接口（多模态）
 BAILIAN_VL_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
 MODEL_VL = "qwen3-vl-plus"  # 存物主图理解
-PROMPT = """这是一张用户要存放的物品照片。请识别并返回以下信息（仅当图中可见时填写，不可见则对应字段为空字符串）：
+_PROMPT_TEMPLATE = """这是一张用户要存放的物品照片。请识别并返回以下信息（仅当图中可见时填写，不可见则对应字段为空字符串）：
+1. 物品名称
+2. 从下列分类中选一个最匹配的（必须原文返回，若都不匹配则填"其他"）：
+{category_list}
+3. 与保质/过期/保修相关的日期：过期日期、生产日期、保修到期日（若图中有）
+
+只返回一行 JSON，不要其他说明，格式严格为：
+{{"name":"物品名称","category_suggestion":"分类名称（原文）",
+ "expire_date":"YYYY-MM-DD或空","production_date":"YYYY-MM-DD或空","warranty_date":"YYYY-MM-DD或空"}}
+
+日期必须从图中文字识别（如保质期至、生产日期、有效期至、保修至等）。图中常见格式如 2025.08.28、2027.02.27 请转为 YYYY-MM-DD 返回；无法识别则空字符串。"""
+
+# 不传分类时用的兜底提示词
+_PROMPT_NO_CATS = """这是一张用户要存放的物品照片。请识别并返回以下信息（仅当图中可见时填写，不可见则对应字段为空字符串）：
 1. 物品名称与分类建议
 2. 与保质/过期/保修相关的日期：过期日期、生产日期、保修到期日（若图中有）
 
@@ -47,7 +60,11 @@ def _get_api_key() -> str:
     return key
 
 
-def understand_item_photo(image_data: bytes, mime_type: str = "image/jpeg") -> dict:
+def understand_item_photo(
+    image_data: bytes,
+    mime_type: str = "image/jpeg",
+    available_categories: list | None = None,
+) -> dict:
     """
     根据主图理解物品，返回建议名称和分类。
     :param image_data: 图片二进制
@@ -58,13 +75,19 @@ def understand_item_photo(image_data: bytes, mime_type: str = "image/jpeg") -> d
     b64 = base64.b64encode(image_data).decode("utf-8")
     data_url = f"data:{mime_type};base64,{b64}"
 
+    if available_categories:
+        cat_list = "\n".join(f"  - {c}" for c in available_categories)
+        prompt = _PROMPT_TEMPLATE.format(category_list=cat_list)
+    else:
+        prompt = _PROMPT_NO_CATS
+
     payload = {
         "model": MODEL_VL,
         "messages": [
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": PROMPT},
+                    {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": {"url": data_url}},
                 ],
             }

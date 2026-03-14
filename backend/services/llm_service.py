@@ -21,15 +21,39 @@ INTENT_SYSTEM = """你是「寻物记」小程序的意图解析器。用户会�
 {"intent": "search" | "query_expire" | "unknown", "keyword": "字符串或空"}
 
 规则：
-- intent 为 search：用户在找东西、问某物在哪、问位置。keyword 填要查找的物品名或关键词（如「护照」「感冒药」「吹风机」），去掉「在哪」「在哪里」「放哪了」等词后剩下的核心词；若整句与找物无关则 keyword 为空。
+- intent 为 search：包括两类：
+  1. 用户在找东西、问某物在哪、问位置。keyword 填要查找的物品名或关键词（如「护照」「感冒药」「吹风机」）。
+  2. 用户在问某个位置里有什么，例如「主卧抽屉有什么」「药箱里有啥」「书房第二层有什么东西」。这时 keyword 填位置关键词（如「主卧抽屉」「药箱」「书房第二层」）。
 - intent 为 query_expire：用户问过期、保质期、快过期了等。
 - intent 为 unknown：无法判断或与找物/过期无关。keyword 为空。
 
 示例：
 用户：「我的护照在哪」 -> {"intent": "search", "keyword": "护照"}
 用户：「吹风机放哪了」 -> {"intent": "search", "keyword": "吹风机"}
+用户：「主卧抽屉有什么」 -> {"intent": "search", "keyword": "主卧抽屉"}
+用户：「药箱里有啥」 -> {"intent": "search", "keyword": "药箱"}
 用户：「有什么快过期了」 -> {"intent": "query_expire", "keyword": ""}
 用户：「你好」 -> {"intent": "unknown", "keyword": ""}"""
+
+
+def _safe_json_dumps(data: Any) -> str:
+    try:
+        return json.dumps(data, ensure_ascii=False, default=str)
+    except Exception:
+        return str(data)
+
+
+def _log_llm_request(scene: str, url: str, body: Dict[str, Any]) -> None:
+    print(f"[llm][{scene}][request] url={url}")
+    print(f"[llm][{scene}][request] body={_safe_json_dumps(body)}")
+
+
+def _log_llm_response(scene: str, data: Dict[str, Any]) -> None:
+    print(f"[llm][{scene}][response] body={_safe_json_dumps(data)}")
+
+
+def _log_llm_parsed(scene: str, data: Any) -> None:
+    print(f"[llm][{scene}][parsed] data={_safe_json_dumps(data)}")
 
 STORE_VOICE_SYSTEM = """你是「寻物记」小程序的存物语音抽取器。
 用户会说一句和“存放物品”相关的话，请从中提取结构化字段（含过期/保修等时间）。
@@ -112,11 +136,13 @@ async def parse_store_voice_entities(user_message: str) -> Dict[str, str]:
         "temperature": 0.1,
         "response_format": {"type": "json_object"},
     }
+    _log_llm_request("parse_store_voice_entities", url, body)
 
     async with httpx.AsyncClient(timeout=20.0) as client:
         resp = await client.post(url, json=body, headers=headers)
         resp.raise_for_status()
         data = resp.json()
+    _log_llm_response("parse_store_voice_entities", data)
 
     choice = (data.get("choices") or [None])[0]
     if not choice:
@@ -156,6 +182,7 @@ async def parse_store_voice_entities(user_message: str) -> Dict[str, str]:
         "open_shelf_life": _int(parsed.get("open_shelf_life")),
         "warranty_date": _date(parsed.get("warranty_date")),
     }
+    _log_llm_parsed("parse_store_voice_entities", out)
     # 日志：存物语音实体抽取结果
     try:
         print("[llm] store_voice_entities:", json.dumps(out, ensure_ascii=False))
@@ -201,11 +228,13 @@ async def extract_extension_from_text(text: str) -> Dict[str, Any]:
         "temperature": 0.1,
         "response_format": {"type": "json_object"},
     }
+    _log_llm_request("extract_extension_from_text", url, body)
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.post(url, json=body, headers=headers)
             resp.raise_for_status()
             data = resp.json()
+        _log_llm_response("extract_extension_from_text", data)
     except Exception:
         return {}
 
@@ -245,6 +274,7 @@ async def extract_extension_from_text(text: str) -> Dict[str, Any]:
         out["open_shelf_life"] = _n(parsed.get("open_shelf_life"))
     if _d(parsed.get("warranty_date")):
         out["warranty_date"] = _d(parsed.get("warranty_date"))
+    _log_llm_parsed("extract_extension_from_text", out)
     # 日志：OCR 文本扩展字段抽取结果
     try:
         print("[llm] extract_extension_from_text:", json.dumps(out, ensure_ascii=False))
@@ -280,15 +310,18 @@ async def summarize_chat(messages: List[Dict[str, str]]) -> str:
         "max_tokens": 512,
         "temperature": 0.3,
     }
+    _log_llm_request("summarize_chat", url, body)
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(url, json=body, headers=headers)
         resp.raise_for_status()
         data = resp.json()
+    _log_llm_response("summarize_chat", data)
     choice = (data.get("choices") or [None])[0]
     if not choice:
         raise ValueError("LLM 返回无 choices")
     content = (choice.get("message") or {}).get("content") or ""
+    _log_llm_parsed("summarize_chat", {"summary": content.strip() or "未能生成总结。"})
     return content.strip() or "未能生成总结。"
 
 
@@ -317,11 +350,13 @@ async def parse_find_intent(user_message: str) -> Dict[str, str]:
         "temperature": 0.1,
         "response_format": {"type": "json_object"},
     }
+    _log_llm_request("parse_find_intent", url, body)
 
     async with httpx.AsyncClient(timeout=15.0) as client:
         resp = await client.post(url, json=body, headers=headers)
         resp.raise_for_status()
         data = resp.json()
+    _log_llm_response("parse_find_intent", data)
     choice = (data.get("choices") or [None])[0]
     if not choice:
         raise ValueError("LLM 返回无 choices")
@@ -336,5 +371,6 @@ async def parse_find_intent(user_message: str) -> Dict[str, str]:
     if intent not in ("search", "query_expire", "unknown"):
         intent = "unknown"
     keyword = (parsed.get("keyword") or "").strip()
-
-    return {"intent": intent, "keyword": keyword}
+    out = {"intent": intent, "keyword": keyword}
+    _log_llm_parsed("parse_find_intent", out)
+    return out

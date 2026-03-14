@@ -9,38 +9,56 @@
     <view class="store-desc">拍照或语音，轻松记录物品位置</view>
   </view>
 
-  <!-- 拍照区卡片 -->
+  <!-- 快速录入：拍照 / 语音 二选一 -->
   <view class="section">
-    <view class="photo-card" bindtap="onTakePhoto">
-      <image wx:if="{{formData.photo_path}}" class="photo-preview" src="{{formData.photo_path}}" mode="aspectFill" />
-      <view wx:else class="photo-placeholder">
-        <view class="photo-icon-wrap">
-          <image class="photo-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
+    <view class="input-card">
+      <!-- 分段选择器 -->
+      <view class="input-mode-seg">
+        <view
+          class="seg-item {{inputMode === 'photo' ? 'seg-active' : ''}}"
+          bindtap="onSwitchMode"
+          data-mode="photo"
+        >
+          <image class="seg-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
+          <text>拍照识别</text>
         </view>
-        <text class="photo-text">点击拍照或从相册选择</text>
-        <text class="photo-hint">添加物品照片，便于日后查找</text>
+        <view
+          class="seg-item {{inputMode === 'voice' ? 'seg-active' : ''}}"
+          bindtap="onSwitchMode"
+          data-mode="voice"
+        >
+          <image class="seg-icon" src="../../assets/icons/mic.svg" mode="aspectFit" />
+          <text>语音录入</text>
+        </view>
       </view>
-    </view>
-  </view>
 
-  <!-- 语音录入卡片 -->
-  <view class="section">
-    <view class="voice-card">
-      <view class="voice-card-title">
-        <image class="voice-card-icon" src="../../assets/icons/mic.svg" mode="aspectFit" />
-        <text>语音录入</text>
+      <!-- 拍照模式内容区 -->
+      <view wx:if="{{inputMode === 'photo'}}" class="input-panel" bindtap="onTakePhoto">
+        <image wx:if="{{formData.photo_path}}" class="photo-preview" src="{{formData.photo_path}}" mode="aspectFill" />
+        <view wx:else class="photo-placeholder">
+          <view class="photo-icon-wrap">
+            <image class="photo-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
+          </view>
+          <text class="photo-text">点击拍照 / 从相册选择</text>
+          <text class="photo-hint">AI 自动识别物品名称与分类</text>
+        </view>
       </view>
-      <view class="voice-card-desc">说出「物品名 + 存放位置」自动填充到下方表单</view>
-      <button
-        class="voice-btn {{isRecording ? 'recording' : ''}}"
-        bindtouchstart="onStartRecord"
-        bindtouchend="onStopRecord"
-      >
-        {{isRecording ? '正在录音...' : '按住 说话'}}
-      </button>
-      <view class="voice-result-block" wx:if="{{showVoiceResult && voiceResultText}}">
-        <view class="voice-result-label">识别结果</view>
-        <view class="voice-result-text">{{voiceResultText}}</view>
+
+      <!-- 语音模式内容区 -->
+      <view wx:if="{{inputMode === 'voice'}}" class="input-panel input-panel-voice">
+        <text class="voice-tip">说出「物品名 + 存放位置」，自动填充表单</text>
+        <button
+          class="voice-btn {{isRecording ? 'recording' : ''}}"
+          bindtouchstart="onStartRecord"
+          bindtouchend="onStopRecord"
+        >
+          <image class="voice-btn-icon" src="../../assets/icons/mic.svg" mode="aspectFit" />
+          <text>{{isRecording ? '正在录音...' : '按住说话'}}</text>
+        </button>
+        <view class="voice-result-block" wx:if="{{showVoiceResult && voiceResultText}}">
+          <view class="voice-result-label">识别结果</view>
+          <view class="voice-result-text">{{voiceResultText}}</view>
+        </view>
       </view>
     </view>
   </view>
@@ -48,7 +66,9 @@
   <!-- 表单信息卡片 -->
   <view class="section">
     <view class="form-card">
-      <view class="form-card-title">📋 物品信息</view>
+      <view class="form-card-title">
+        <view class="card-title-bar"></view>物品信息
+      </view>
 
       <view class="form-item">
         <text class="form-label">物品名称 <text class="required">*</text></text>
@@ -98,92 +118,134 @@
     </view>
   </view>
 
-  <!-- 扩展信息：始终展示，内部根据是否有扩展字段/识别结果决定内容 -->
+  <!-- 扩展信息：AI 辅助识别 + 字段填写 -->
   <view class="section">
     <view class="form-card extension-card">
-      <view class="form-card-title">📌 扩展信息</view>
-      <view class="extension-modes-desc">支持拍照凭证、语音补充、手动填写三种方式</view>
 
-      <!-- 方式一：拍照（凭证照）+ OCR 提取文字 -->
-      <view class="extension-mode-block">
-        <view class="extension-mode-label">
-          <image class="extension-voice-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
-          <text>拍照</text>
+      <!-- 卡片标题 -->
+      <view class="ext-header">
+        <view class="form-card-title">
+          <view class="card-title-bar"></view>扩展信息
         </view>
-        <view class="extension-photo-wrap" bindtap="onExtensionPhoto">
-          <image wx:if="{{extensionPhotoPath}}" class="extension-photo-preview" src="{{extensionPhotoPath}}" mode="aspectFill" />
-          <view wx:else class="extension-photo-placeholder">
-            <image class="extension-photo-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
-            <text class="extension-photo-text">凭证/说明书等</text>
-          </view>
-        </view>
-        <view class="extension-ocr-btn-wrap" wx:if="{{extensionPhotoPath}}">
-          <view class="extension-ocr-btn" bindtap="onExtensionOcr">📄 提取文字</view>
+        <view class="ext-header-tag {{showAiPanel ? 'ext-header-tag-active' : ''}}" bindtap="onToggleAiPanel">
+          <image class="ext-header-tag-icon" src="../../assets/icons/bot.svg" mode="aspectFit" />
+          <text>AI 辅助</text>
         </view>
       </view>
 
-      <!-- 方式二：语音补充 -->
-      <view class="extension-mode-block">
-        <view class="extension-mode-label">
-          <image class="extension-voice-icon" src="../../assets/icons/mic.svg" mode="aspectFit" />
-          <text>语音补充</text>
-        </view>
-        <view class="extension-voice-row">
-          <button
-            class="extension-voice-btn {{isRecordingExtension ? 'recording' : ''}}"
+      <!-- AI 辅助录入区（点击 AI辅助 后展开） -->
+      <view wx:if="{{showAiPanel}}" class="ext-ai-zone">
+        <view class="ext-ai-zone-label">AI 识别 · 自动填充字段</view>
+
+        <!-- 两张操作卡并排 -->
+        <view class="ext-ai-cards">
+          <!-- 拍凭证卡 -->
+          <view class="ext-ai-card" bindtap="onExtensionPhoto">
+            <view class="ext-ai-card-icon-wrap camera">
+              <image class="ext-ai-card-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
+            </view>
+            <text class="ext-ai-card-name">拍凭证</text>
+            <text class="ext-ai-card-hint">说明书 / 发票</text>
+          </view>
+
+          <!-- 语音输入卡 -->
+          <view
+            class="ext-ai-card {{isRecordingExtension ? 'ext-ai-card-recording' : ''}}"
             bindtouchstart="onExtensionVoiceStart"
             bindtouchend="onExtensionVoiceEnd"
           >
-            {{isRecordingExtension ? '松开发送' : '按住 说话'}}
-          </button>
+            <view class="ext-ai-card-icon-wrap mic {{isRecordingExtension ? 'mic-active' : ''}}">
+              <image class="ext-ai-card-icon" src="../../assets/icons/mic.svg" mode="aspectFit" />
+            </view>
+            <text class="ext-ai-card-name">{{isRecordingExtension ? '录音中...' : '语音补充'}}</text>
+            <text class="ext-ai-card-hint">{{isRecordingExtension ? '松开发送' : '按住说话'}}</text>
+          </view>
         </view>
-        <view class="voice-result-block" wx:if="{{showExtensionVoiceResult && extensionVoiceText}}">
-          <view class="voice-result-label">识别结果（可编辑）</view>
+
+        <!-- 凭证照预览（拍照后显示预览；识别完成后展示状态标签） -->
+        <view wx:if="{{extensionPhotoPath}}" class="ext-photo-result">
+          <image class="ext-photo-result-img" src="{{extensionPhotoPath}}" mode="aspectFill" />
+          <view class="ext-photo-result-bar">
+            <view wx:if="{{extensionOcrDone}}" class="ext-photo-done-tag">
+              <image class="ext-photo-done-icon" src="../../assets/icons/bot.svg" mode="aspectFit" />
+              <text>已识别并填充</text>
+            </view>
+            <view wx:else class="ext-photo-recognizing-tag">
+              <text>识别中...</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 语音识别结果（录音后显示，可编辑） -->
+        <view class="ext-voice-result" wx:if="{{showExtensionVoiceResult && extensionVoiceText}}">
+          <view class="ext-voice-result-header">
+            <image class="ext-voice-result-icon" src="../../assets/icons/mic.svg" mode="aspectFit" />
+            <text class="ext-voice-result-label">语音识别结果（可编辑）</text>
+          </view>
           <textarea
-            class="extension-voice-textarea"
-            placeholder="语音识别结果会出现在这里，可继续编辑"
+            class="ext-voice-textarea"
             value="{{extensionVoiceText}}"
             bindinput="onExtensionVoiceInput"
+            placeholder="语音识别结果显示在这里"
           />
         </view>
       </view>
 
-      <!-- 方式三：人工输入（扩展字段 + 无分类时的补充说明） -->
-      <view class="extension-mode-block extension-manual-block">
-        <view class="extension-mode-label">✏️ 手动填写</view>
-        <view class="form-item" wx:for="{{extensionFields}}" wx:key="name">
-          <text class="form-label">{{item.label}} {{item.required ? '*' : ''}}</text>
-          <picker wx:if="{{item.type === 'date'}}" mode="date" bindchange="onDateChange" data-field="{{item.name}}">
-            <view class="form-picker">
-              <text class="picker-value {{extensionValues[item.name] ? '' : 'placeholder'}}">{{extensionValues[item.name] || '选择日期'}}</text>
-              <text class="picker-arrow">📅</text>
-            </view>
-          </picker>
-          <picker wx:elif="{{item.type === 'select'}}" mode="selector" range="{{item.options}}" bindchange="onExtensionInput" data-field="{{item.name}}">
-            <view class="form-picker">
-              <text class="picker-value {{extensionValues[item.name] ? '' : 'placeholder'}}">{{extensionValues[item.name] || '请选择'}}</text>
-              <text class="picker-arrow">›</text>
-            </view>
-          </picker>
+      <!-- 字段区分隔线 -->
+      <view class="ext-section-divider">
+        <view class="ext-divider-line"></view>
+        <text class="ext-divider-text">字段详情</text>
+        <view class="ext-divider-line"></view>
+      </view>
+
+      <!-- 扩展字段列表 -->
+      <view class="ext-fields-block">
+        <view class="ext-field-item" wx:for="{{extensionFields}}" wx:key="name">
+          <text class="form-label">{{item.label}}<text wx:if="{{item.required}}" class="required"> *</text></text>
+          <!-- 日期 -->
+          <view wx:if="{{item.type === 'date'}}" class="picker-row">
+            <picker class="picker-flex" mode="date" bindchange="onDateChange" data-field="{{item.name}}">
+              <view class="form-picker {{extensionValues[item.name] ? 'picker-filled' : ''}}">
+                <text class="picker-value {{extensionValues[item.name] ? '' : 'placeholder'}}">{{extensionValues[item.name] || '选择日期'}}</text>
+                <text class="picker-arrow">›</text>
+              </view>
+            </picker>
+            <text wx:if="{{extensionValues[item.name]}}" class="field-clear-btn" bindtap="onClearField" data-field="{{item.name}}">×</text>
+          </view>
+          <!-- 下拉选择 -->
+          <view wx:elif="{{item.type === 'select'}}" class="picker-row">
+            <picker class="picker-flex" mode="selector" range="{{item.options}}" bindchange="onExtensionInput" data-field="{{item.name}}">
+              <view class="form-picker {{extensionValues[item.name] ? 'picker-filled' : ''}}">
+                <text class="picker-value {{extensionValues[item.name] ? '' : 'placeholder'}}">{{extensionValues[item.name] || '请选择'}}</text>
+                <text class="picker-arrow">›</text>
+              </view>
+            </picker>
+            <text wx:if="{{extensionValues[item.name]}}" class="field-clear-btn" bindtap="onClearField" data-field="{{item.name}}">×</text>
+          </view>
+          <!-- 数字 -->
           <input
             wx:elif="{{item.type === 'number'}}"
             class="form-input"
             type="number"
-            placeholder="{{item.label}}"
+            placeholder="请输入{{item.label}}"
+            placeholder-class="form-placeholder"
             value="{{extensionValues[item.name]}}"
             bindinput="onExtensionInput"
             data-field="{{item.name}}"
           />
+          <!-- 文本 -->
           <input
             wx:else
             class="form-input"
-            placeholder="{{item.label}}"
+            placeholder="请输入{{item.label}}"
+            placeholder-class="form-placeholder"
             value="{{extensionValues[item.name]}}"
             bindinput="onExtensionInput"
             data-field="{{item.name}}"
           />
         </view>
-        <view class="form-item form-item-last" wx:if="{{extensionFields.length === 0}}">
+        <!-- 无分类字段时展示通用备注 -->
+        <view class="ext-field-item form-item-last" wx:if="{{extensionFields.length === 0}}">
           <text class="form-label">补充说明</text>
           <textarea
             class="form-textarea"
@@ -194,6 +256,7 @@
           />
         </view>
       </view>
+
     </view>
   </view>
 

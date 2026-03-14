@@ -21,7 +21,7 @@
         <text class="reminder-time" wx:if="{{item.time_label}}">{{item.time_label}}</text>
       </view>
       <view class="reminder-content" wx:if="{{item.display_content || item.content}}">{{item.display_content || item.content}}</view>
-      <view class="reminder-actions">
+      <view class="reminder-actions" wx:if="{{item.days_left != null && item.days_left < 30}}">
         <button class="reminder-btn primary" data-id="{{item.id}}" data-action="done" bindtap="onHandle">✅ 已处理</button>
         <button wx:if="{{item.level === 'urgent'}}" class="reminder-btn secondary" data-id="{{item.id}}" data-action="defer" bindtap="onHandle">⏰ 延期</button>
         <button wx:else class="reminder-btn secondary" data-id="{{item.id}}" data-action="ignore" bindtap="onHandle">❌ 忽略</button>

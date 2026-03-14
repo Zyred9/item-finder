@@ -89,16 +89,15 @@ def sync_reminders_for_item(db: Session, item: Item) -> int:
             remind_at = ext.production_date + timedelta(days=int(ext.shelf_life_days))
         except (TypeError, ValueError):
             pass
-    if remind_at is not None and remind_at >= today and not has_pending(item.id, "expire"):
+    if remind_at is not None and not has_pending(item.id, "expire"):
         days_left = (remind_at - today).days
         level = _level_for_days_left(days_left)
-        suffix = _title_suffix_for_days(days_left, "expire")
         r = Reminder(
             family_id=item.family_id,
             item_id=item.id,
             type="expire",
             level=level,
-            title=f"{item.name} {suffix}",
+            title=item.name,
             content=_content_for_days(days_left, "还有"),
             remind_at=remind_at,
             status="pending",
@@ -112,22 +111,20 @@ def sync_reminders_for_item(db: Session, item: Item) -> int:
     if open_date is not None and open_shelf_life is not None and not has_pending(item.id, "open"):
         try:
             open_expire = open_date + timedelta(days=int(open_shelf_life))
-            if open_expire >= today:
-                days_left = (open_expire - today).days
-                level = _level_for_days_left(days_left)
-                suffix = _title_suffix_for_days(days_left, "open")
-                r = Reminder(
-                    family_id=item.family_id,
-                    item_id=item.id,
-                    type="open",
-                    level=level,
-                    title=f"{item.name} {suffix}",
-                    content=_content_for_days(days_left, "开封后还有"),
-                    remind_at=open_expire,
-                    status="pending",
-                )
-                db.add(r)
-                created += 1
+            days_left = (open_expire - today).days
+            level = _level_for_days_left(days_left)
+            r = Reminder(
+                family_id=item.family_id,
+                item_id=item.id,
+                type="open",
+                level=level,
+                title=item.name,
+                content=_content_for_days(days_left, "开封后还有"),
+                remind_at=open_expire,
+                status="pending",
+            )
+            db.add(r)
+            created += 1
         except (TypeError, ValueError):
             pass
 
@@ -136,13 +133,12 @@ def sync_reminders_for_item(db: Session, item: Item) -> int:
     if warranty_date is not None and warranty_date >= today and not has_pending(item.id, "warranty"):
         days_left = (warranty_date - today).days
         level = _level_for_days_left(days_left)
-        suffix = _title_suffix_for_days(days_left, "warranty")
         r = Reminder(
             family_id=item.family_id,
             item_id=item.id,
             type="warranty",
             level=level,
-            title=f"{item.name} {suffix}",
+            title=item.name,
             content=_content_for_days(days_left, "保修还有"),
             remind_at=warranty_date,
             status="pending",

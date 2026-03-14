@@ -34,10 +34,14 @@ def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -
 async def photo_understand(
     photo: UploadFile = File(...),
     user_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """存物主图理解：拍照识物，返回建议名称与分类（Qwen-VL）"""
     from config.settings import settings
     from services.vision_service import understand_item_photo
+    from services.ocr_service import extract_text
+    from services.llm_service import extract_extension_from_text
+    from models import Category
 
     if not settings.BAILIAN_API_KEY:
         raise HTTPException(status_code=503, detail="未配置 BAILIAN_API_KEY（百炼）")
@@ -46,14 +50,49 @@ async def photo_understand(
     content = await photo.read()
     if not content:
         raise HTTPException(status_code=400, detail="图片为空")
+
+    # 获取所有分类名称传给模型，让模型从中选择（只传叶子节点更精准）
+    all_cats = db.query(Category).order_by(Category.sort_order, Category.id).all()
+    cat_names = [c.name for c in all_cats if c.name]
+
     try:
-        out = understand_item_photo(content, mime_type=mime)
+        out = understand_item_photo(content, mime_type=mime, available_categories=cat_names or None)
+        suggested_extension = dict(out.get("suggested_extension") or {})
+
+        # 校验模型返回的分类是否在可选列表内；不在则默认"其他"
+        raw_category = (out.get("suggested_category") or "").strip()
+        if raw_category and cat_names:
+            matched = next((n for n in cat_names if n == raw_category), None)
+            if not matched:
+                # 尝试模糊匹配（包含关系）
+                matched = next(
+                    (n for n in cat_names if n in raw_category or raw_category in n), None
+                )
+            if not matched:
+                # 彻底没匹配到，降级"其他"
+                raw_category = "其他"
+                print(f"[api] /items/photo/understand: category '{out.get('suggested_category')}' 未匹配，已降级为 '其他'")
+            else:
+                raw_category = matched
+
+        # 主图里的保质期/生产日期往往更依赖 OCR 文本提取，这里补一层回退识别。
+        try:
+            text = extract_text(content, mime_type=mime)
+            if text and text.strip():
+                ocr_extension = await extract_extension_from_text(text.strip())
+                if ocr_extension:
+                    for key, value in ocr_extension.items():
+                        if value not in (None, "") and not suggested_extension.get(key):
+                            suggested_extension[key] = value
+        except Exception as ocr_err:
+            print(f"[api] /items/photo/understand ocr fallback skipped: {ocr_err}")
+
         data = {
             "suggested_name": out.get("suggested_name", ""),
-            "suggested_category": out.get("suggested_category", ""),
+            "suggested_category": raw_category,
         }
-        if out.get("suggested_extension"):
-            data["suggested_extension"] = out["suggested_extension"]
+        if suggested_extension:
+            data["suggested_extension"] = suggested_extension
         # 日志：主图理解接口返回给前端的数据
         try:
             print("[api] /items/photo/understand data:", json.dumps(data, ensure_ascii=False))

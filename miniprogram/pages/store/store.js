@@ -37,16 +37,22 @@ Page({
     extensionValues: {},
     /** 扩展信息：凭证照（拍照） */
     extensionPhotoPath: '',
+    /** 扩展信息：凭证照 OCR 是否已完成 */
+    extensionOcrDone: false,
     /** 扩展信息：语音补充（语音识别结果，可编辑） */
     extensionVoiceText: '',
     /** 扩展信息：是否正在录扩展语音 */
     isRecordingExtension: false,
     /** 扩展语音识别结果是否已展示 */
     showExtensionVoiceResult: false,
+    /** AI 识别面板是否展开 */
+    showAiPanel: false,
     /** 主图理解给出的分类建议（文本，未匹配到分类时展示） */
     suggestedCategoryName: '',
     
     // 状态
+    /** 快速录入模式：photo | voice */
+    inputMode: 'photo',
     isRecording: false,
     submitting: false,
     /** 语音识别原文（仅识别到内容后才展示块） */
@@ -163,16 +169,23 @@ Page({
             const updates = {}
             if (name) updates['formData.name'] = name
             const categories = this.data.categories || []
-            const match = categories.find(
-              (c) => c.name && categorySuggestion && c.name.includes(categorySuggestion)
-            )
+            // 双向模糊匹配：先精确，再包含，再降级"其他"
+            let match = null
+            if (categorySuggestion) {
+              match = categories.find((c) => c.name && c.name === categorySuggestion)
+              if (!match) {
+                match = categories.find(
+                  (c) => c.name && (c.name.includes(categorySuggestion) || categorySuggestion.includes(c.name))
+                )
+              }
+              if (!match) {
+                match = categories.find((c) => c.name === '其他')
+              }
+            }
             if (match) {
               updates['formData.category_id'] = match.id
               updates.selectedCategory = match
               updates.extensionFields = match.extension_fields || []
-            }
-            if (categorySuggestion && !match) {
-              updates.suggestedCategoryName = categorySuggestion
             }
             if (Object.keys(suggestedExt).length > 0) {
               updates.extensionValues = { ...(this.data.extensionValues || {}), ...suggestedExt }
@@ -221,6 +234,23 @@ Page({
   },
 
   /**
+   * 切换快速录入模式（拍照 / 语音）
+   */
+  onSwitchMode(e) {
+    const mode = e.currentTarget.dataset.mode
+    if (mode !== this.data.inputMode) {
+      this.setData({ inputMode: mode })
+    }
+  },
+
+  /**
+   * 切换 AI 识别面板展开/收起
+   */
+  onToggleAiPanel() {
+    this.setData({ showAiPanel: !this.data.showAiPanel })
+  },
+
+  /**
    * 扩展信息 - 拍照（凭证/说明书等）
    */
   onExtensionPhoto() {
@@ -228,9 +258,11 @@ Page({
       count: 1,
       mediaType: ['image'],
       sourceType: ['camera', 'album'],
-      success: (res) => {
+      success: async (res) => {
         const tempFilePath = res.tempFiles[0].tempFilePath
-        this.setData({ extensionPhotoPath: tempFilePath })
+        this.setData({ extensionPhotoPath: tempFilePath, extensionOcrDone: false })
+        // 选图后自动触发 OCR 识别，无需再手动点击
+        await this.onExtensionOcr()
       }
     })
   },
@@ -265,6 +297,7 @@ Page({
           )
           if (toAdd.length > 0) setData.extensionFields = baseFields.concat(toAdd)
         }
+        setData.extensionOcrDone = true
         this.setData(setData)
         wx.showToast({ title: Object.keys(suggestedExt).length > 0 ? '已提取文字并识别日期' : '已提取文字', icon: 'success' })
       } else {
@@ -421,6 +454,16 @@ Page({
   },
 
   /**
+   * 清空单个扩展字段值
+   */
+  onClearField(e) {
+    const { field } = e.currentTarget.dataset
+    const extensionValues = { ...this.data.extensionValues }
+    extensionValues[field] = ''
+    this.setData({ extensionValues })
+  },
+
+  /**
    * 扩展字段输入（picker 为索引，需转为选项值）
    */
   onExtensionInput(e) {
@@ -487,7 +530,14 @@ Page({
         description: description || undefined,
         category_id: formData.category_id || null,
         photo_path: photoPath,
-        extension: Object.keys(extensionValues).length > 0 ? extensionValues : null
+        extension: (() => {
+          const clean = {}
+          Object.keys(extensionValues).forEach((k) => {
+            const v = extensionValues[k]
+            if (v !== '' && v !== null && v !== undefined) clean[k] = v
+          })
+          return Object.keys(clean).length > 0 ? clean : null
+        })()
       }
 
       if (editItemId) {

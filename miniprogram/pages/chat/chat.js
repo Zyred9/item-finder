@@ -3,6 +3,7 @@
  */
 const api = require('../../utils/api')
 const util = require('../../utils/util')
+const { normalizeMatchedItems } = require('./chat_item_view')
 
 Page({
   data: {
@@ -86,21 +87,17 @@ Page({
       const list = (res && res.messages) || []
       if (list.length > 0) {
         const messages = list.map(m => {
-          const matchedItems = (m.matched_items && (Array.isArray(m.matched_items) ? m.matched_items : [])) || []
-          const actions = matchedItems.length > 0
-            ? [
-                { type: 'navigate', variant: 'primary', icon: '📍', label: '导航过去' },
-                { type: 'photo', variant: 'secondary', icon: '📷', label: '看照片' }
-              ]
-            : []
+          const matchedItems = normalizeMatchedItems(
+            (m.matched_items && (Array.isArray(m.matched_items) ? m.matched_items : [])) || [],
+            api.resolveStaticUrl
+          )
           return {
             id: m.id,
             role: m.role,
             roleClass: m.role === 'user' ? 'user' : 'assistant',
             content: m.content || '',
             time: m.created_at ? this.formatChatTime(m.created_at) : '',
-            matchedItems,
-            actions
+            matchedItems
           }
         })
         this.setData({ messages })
@@ -301,14 +298,7 @@ Page({
 
       const replyData = {
         intent: result.intent,
-        matchedItems: result.matched_items || []
-      }
-
-      if (result.matched_items && result.matched_items.length > 0) {
-        replyData.actions = [
-          { type: 'navigate', variant: 'primary', icon: '📍', label: '导航过去' },
-          { type: 'photo', variant: 'secondary', icon: '📷', label: '看照片' }
-        ]
+        matchedItems: normalizeMatchedItems(result.matched_items || [], api.resolveStaticUrl)
       }
 
       this.addMessage('assistant', result.reply, replyData)
@@ -474,7 +464,33 @@ Page({
   },
 
   /**
-   * 压缩总结：调用 AI 将当前会话记录总结成一段话并展示
+   * 从当前会话消息中提取压缩总结行，格式：物品名：位置
+   */
+  buildSummaryLines() {
+    const messages = this.data.messages || []
+    const uniqueMap = new Map()
+
+    messages.forEach((msg) => {
+      const matchedItems = Array.isArray(msg.matchedItems) ? msg.matchedItems : []
+      matchedItems.forEach((item) => {
+        const name = item && item.name ? String(item.name).trim() : ''
+        const location = item && item.location ? String(item.location).trim() : ''
+        if (!name || !location) {
+          return
+        }
+        const itemId = item && item.id ? String(item.id) : ''
+        const key = itemId || `${name}__${location}`
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, `${name}：${location}`)
+        }
+      })
+    })
+
+    return Array.from(uniqueMap.values())
+  },
+
+  /**
+   * 压缩总结：提取当前会话中的物品与位置，成功后清空历史并展示结果
    */
   async onSummarize() {
     const familyId = api.getFamilyId()
@@ -487,12 +503,27 @@ Page({
       wx.showToast({ title: '暂无会话', icon: 'none' })
       return
     }
+
+    const summaryLines = this.buildSummaryLines()
+    if (summaryLines.length === 0) {
+      wx.showToast({ title: '暂无可压缩结果', icon: 'none' })
+      return
+    }
+
     wx.showLoading({ title: '总结中...' })
     try {
-      const res = await api.summarizeChat(familyId, sessionId)
+      await api.clearChatHistory(familyId, sessionId)
       wx.hideLoading()
-      const summary = (res && res.summary && String(res.summary).trim()) || '未能生成总结。'
-      this.addMessage('assistant', `📋 对话总结\n\n${summary}`)
+
+      const newSessionId = util.generateUUID()
+      this.setChatSessionId(newSessionId)
+      this.setData({
+        messages: [],
+        sessionId: newSessionId,
+        scrollToView: ''
+      })
+      this.addMessage('assistant', summaryLines.join('\n'))
+      wx.showToast({ title: '总结成功', icon: 'success' })
     } catch (err) {
       wx.hideLoading()
       console.error('压缩总结失败', err)
