@@ -86,8 +86,8 @@ class ChatService:
         if intent == "search" and keyword:
             items, _ = SemanticSearchService.search_items(db, family_id, keyword, limit=5)
             if items:
-                reply = ChatService._format_search_result(items)
-                return "search", ChatService._items_to_dict(db, items), reply
+                # 找到物品时，不展示文字回复，直接展示匹配结果卡片
+                return "search", ChatService._items_to_dict(db, items), ""
             return "search", [], ChatService._get_not_found_reply(keyword, message)
 
         if intent == "query_expire":
@@ -104,12 +104,12 @@ class ChatService:
         if keyword:
             items, _ = SemanticSearchService.search_items(db, family_id, keyword, limit=5)
             if items:
-                reply = ChatService._format_search_result(items)
-                return "search", ChatService._items_to_dict(db, items), reply
+                # 找到物品时，不展示文字回复，直接展示匹配结果卡片
+                return "search", ChatService._items_to_dict(db, items), ""
             return "search", [], ChatService._get_not_found_reply(keyword, message)
 
         if "过期" in msg:
-            return "query_expire", [], "暂未实现过期查询功能"
+            return "query_expire", [], "这个功能我正在学中📚 不过你可以看看首页的「智能提醒」，那里会告诉你哪些东西快过期啦！😊"
 
         return "unknown", [], ChatService._get_unknown_intent_reply()
 
@@ -159,10 +159,26 @@ class ChatService:
 
     @staticmethod
     def _extract_search_keyword(message: str) -> str:
-        """提取搜索关键词（灵活识别多种寻物表达方式）"""
+        """提取搜索关键词（灵活识别多种寻物表达方式，支持多个物品）"""
         msg = (message or "").strip()
         if not msg:
             return ""
+
+        # 0. 多个物品枚举：薯片剪刀指甲刀卫生纸（无标点分隔的名词列表）
+        # 特征：8 个字以上，没有明显的疑问词或句子结构
+        if len(msg) >= 6:
+            # 检查是否没有明显的句子结构
+            has_sentence_structure = any(token in msg for token in [
+                "在哪", "在哪里", "是", "有", "要", "想", "能", "会", "应该",
+                "什么", "怎么", "为什么", "吗", "呢", "吧"
+            ])
+            
+            # 如果没有句子结构，且包含多个可能的物品名（按常见物品词分割）
+            if not has_sentence_structure:
+                # 清理标点符号
+                clean_msg = msg.strip("？?。！!，,、")
+                # 直接返回原文作为搜索关键词（语义搜索会处理多个物品）
+                return clean_msg
 
         # 1. 位置疑问句：XXX 在哪/在哪里/放哪/放在哪/位置在哪/...
         if ("在哪" in msg or "在哪里" in msg or "位置" in msg or 

@@ -34,7 +34,44 @@
         </view>
 
         <view class="chat-body">
-          <view class="chat-bubble">
+          <!-- 有匹配结果时，使用柔和的气泡框展示 -->
+          <view class="chat-bubble chat-bubble-result" wx:if="{{item.matchedItems && item.matchedItems.length > 0}}">
+            <view class="result-card-list">
+              <view
+                class="result-card-item"
+                wx:for="{{item.matchedItems}}"
+                wx:for-item="mi"
+                wx:key="id"
+                bindtap="onItemClick"
+                data-id="{{mi.id}}"
+              >
+                <!-- 分隔线（除了最后一个） -->
+                <view class="result-card-divider" wx:if="{{index < item.matchedItems.length - 1}}"></view>
+                <view class="result-card-image-wrap">
+                  <image wx:if="{{mi.photo_path}}" class="result-card-image" src="{{mi.photo_path}}" mode="aspectFill" />
+                  <view wx:else class="result-card-image result-card-placeholder">
+                    <image class="result-card-placeholder-icon" src="{{mi.category_icon || '../../assets/icons/map-pin.svg'}}" mode="aspectFit" />
+                  </view>
+                </view>
+                <view class="result-card-content">
+                  <view class="result-card-name-row">
+                    <view class="result-card-name">{{mi.name}}</view>
+                    <view wx:if="{{mi.expiry_status === 'expired'}}" class="expiry-badge-card expired">{{mi.expiry_label}}</view>
+                    <view wx:elif="{{mi.expiry_status === 'expiring'}}" class="expiry-badge-card expiring">{{mi.expiry_label}}</view>
+                  </view>
+                  <view class="result-card-location">📍 {{mi.location}}</view>
+                  <view class="result-card-meta" wx:if="{{mi.creator_name || mi.created_at}}">
+                    <text class="result-card-meta-text">{{mi.creator_name || '我'}}</text>
+                    <text class="result-card-dot">·</text>
+                    <text class="result-card-meta-text">{{mi.created_at}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 没有匹配结果时，展示普通文字气泡 -->
+          <view class="chat-bubble" wx:if="{{!item.matchedItems || item.matchedItems.length === 0}}">
             <text class="bubble-text">{{item.content}}</text>
 
             <view class="chat-suggestions" wx:if="{{item.suggestions && item.suggestions.length > 0}}">
@@ -47,38 +84,6 @@
                 data-text="{{sug}}"
               >
                 {{sug}}
-              </view>
-            </view>
-
-            <view class="search-result" wx:if="{{item.matchedItems && item.matchedItems.length > 0}}">
-              <view class="search-result-header">
-                <text class="search-result-title">匹配结果</text>
-                <text class="search-result-count">{{item.matchedItems.length}} 件</text>
-              </view>
-
-              <view
-                class="search-result-item"
-                wx:for="{{item.matchedItems}}"
-                wx:for-item="mi"
-                wx:key="id"
-                bindtap="onItemClick"
-                data-id="{{mi.id}}"
-              >
-                <image wx:if="{{mi.photo_path}}" class="result-image" src="{{mi.photo_path}}" mode="aspectFill" />
-                <view wx:else class="result-image result-image-placeholder">
-                  <image class="result-placeholder-icon" src="{{mi.category_icon || '../../assets/icons/map-pin.svg'}}" mode="aspectFit" />
-                </view>
-                <view class="result-info">
-                  <view class="result-name-row">
-                    <view class="result-name">{{mi.name}}</view>
-                    <view wx:if="{{mi.expiry_status === 'expired'}}" class="expiry-tag expired">{{mi.expiry_label}}</view>
-                    <view wx:elif="{{mi.expiry_status === 'expiring'}}" class="expiry-tag expiring">{{mi.expiry_label}}</view>
-                  </view>
-                  <view class="result-location">📍 {{mi.location}}</view>
-                  <view class="result-meta" wx:if="{{mi.creator_name || mi.created_at}}">
-                    {{mi.creator_name || '我'}} · {{mi.created_at}}
-                  </view>
-                </view>
               </view>
             </view>
           </view>

@@ -70,9 +70,46 @@ class SemanticSearchService:
         normalized_query = SemanticSearchService._normalize_text(query_text)
         if not item_text or not normalized_query:
             return False
+        
+        # 完整查询匹配
         if normalized_query in item_text:
             return True
 
+        # 对于多物品枚举输入（≥6 个字且无疑问词），需要更严格的匹配
+        # 检查是否是多个物品的枚举（没有疑问词、长度较长）
+        is_multi_item_query = (
+            len(normalized_query) >= 6 and
+            not any(token in normalized_query for token in ["在哪", "在哪里", "什么", "怎么", "为什么"])
+        )
+        
+        if is_multi_item_query:
+            # 多物品查询：要求物品名（name）必须完整出现在查询中
+            item_name = getattr(item, "name", "") or ""
+            if not item_name:
+                return False
+            
+            item_name_normalized = SemanticSearchService._normalize_text(item_name)
+            
+            # 检查物品名是否作为完整词出现在查询中
+            if item_name_normalized and len(item_name_normalized) >= 2:
+                if item_name_normalized in normalized_query:
+                    return True
+            
+            # 也检查反向：查询中的物品是否在物品名中
+            # 例如：查询"薯片剪刀"，物品名"乐事薯片"，应该匹配"薯片"
+            query_len = len(normalized_query)
+            item_name_len = len(item_name_normalized)
+            
+            # 尝试在查询中寻找与物品名匹配的子串（至少 2 个字）
+            for i in range(query_len - 1):
+                for j in range(i + 2, min(i + 6, query_len + 1)):  # 检查 2-5 字的子串
+                    sub = normalized_query[i:j]
+                    if sub in item_name_normalized:
+                        return True
+            
+            return False
+
+        # 普通查询：使用原有的宽松匹配逻辑
         terms = SemanticSearchService._build_query_terms(query_text)
         strong_terms = [term for term in terms if len(term) >= 2 and term in item_text]
         if strong_terms:
