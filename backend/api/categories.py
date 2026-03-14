@@ -1,5 +1,6 @@
 """
 分类相关 API（从数据库读取，id 为整型自增）
+只保留一级分类，共 7 个
 """
 import json
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,36 +24,23 @@ def _parse_extension_fields(raw: Optional[str]) -> Optional[List[ExtensionFieldC
         return None
 
 
-def _build_tree(db: Session) -> List[CategoryTreeResponse]:
-    """从数据库构建分类树"""
-    all_cats = db.query(Category).order_by(Category.sort_order, Category.id).all()
-    by_parent = {}
-    for c in all_cats:
-        pid = c.parent_id
-        if pid not in by_parent:
-            by_parent[pid] = []
-        by_parent[pid].append(c)
-
-    def children_of(parent_id: Optional[int]) -> List[CategoryTreeResponse]:
-        nodes = by_parent.get(parent_id) or []
-        return [
-            CategoryTreeResponse(
-                id=int(n.id),
-                name=n.name,
-                icon=n.icon,
-                children=children_of(n.id),
-                extension_fields=_parse_extension_fields(n.extension_fields),
-            )
-            for n in nodes
-        ]
-
-    return children_of(None)
-
-
-@router.get("", response_model=Response[List[CategoryTreeResponse]])
+@router.get("", response_model=Response[List[CategoryResponse]])
 async def get_categories(db: Session = Depends(get_db)):
-    """获取分类列表（树形结构，从数据库读取）"""
-    result = _build_tree(db)
+    """获取分类列表（只返回一级分类，按 sort_order 排序）"""
+    cats = db.query(Category).order_by(Category.sort_order, Category.id).all()
+    
+    result = []
+    for cat in cats:
+        result.append(CategoryResponse(
+            id=int(cat.id),
+            name=cat.name,
+            icon=cat.icon,
+            parent_id=None,  # 一级分类无父级
+            sort_order=cat.sort_order or 0,
+            extension_fields=_parse_extension_fields(cat.extension_fields),
+            created_at=cat.created_at,
+        ))
+    
     return Response(data=result)
 
 
@@ -66,7 +54,7 @@ async def get_category(category_id: int, db: Session = Depends(get_db)):
         id=int(cat.id),
         name=cat.name,
         icon=cat.icon,
-        parent_id=int(cat.parent_id) if cat.parent_id else None,
+        parent_id=None,  # 一级分类无父级
         sort_order=cat.sort_order or 0,
         extension_fields=_parse_extension_fields(cat.extension_fields),
         created_at=cat.created_at,

@@ -272,9 +272,6 @@ module.exports = {
   submitFeedback: (content, contact) =>
     request('/feedback', 'POST', { content: content || '', contact: contact || '' }),
 
-  // ========== 位置 ==========
-  getLocations: (familyId) => request(`/locations?family_id=${familyId}`),
-
   // ========== 上传 ==========
   uploadPhoto: (filePath) => {
     return new Promise((resolve, reject) => {

@@ -25,24 +25,6 @@
     </view>
   </view>
 
-  <!-- 搜索框：输入确认带词跳找物，点击右侧语音图标直接进找物 -->
-  <view class="search-container">
-    <view class="search-box">
-      <image class="search-icon" src="../../assets/icons/search.svg" mode="widthFix" />
-      <input
-        class="search-input"
-        placeholder="搜索物品，或试试语音..."
-        placeholder-class="search-placeholder"
-        value="{{searchKeyword}}"
-        bindinput="onSearchInput"
-        bindconfirm="onSearch"
-      />
-      <view class="search-voice-icon" bindtap="onSearchTap">
-        <image class="search-voice-icon-img" src="../../assets/icons/mic.svg" mode="aspectFit" />
-      </view>
-    </view>
-  </view>
-
   <!-- 快捷入口 -->
   <view class="quick-actions">
     <view class="quick-action store" bindtap="onStoreItem">
@@ -65,6 +47,7 @@
   <view class="section" wx:if="{{displayReminders.length > 0}}">
     <view class="section-header">
       <view class="section-title">
+        <image class="section-icon" src="../../assets/icons/bell.svg" mode="aspectFit" />
         <text>智能提醒</text>
         <text class="badge">{{reminders.length}}</text>
       </view>
@@ -95,6 +78,7 @@
   <view class="section">
     <view class="section-header">
       <view class="section-title">
+        <image class="section-icon" src="../../assets/icons/clock.svg" mode="aspectFit" />
         <text>最近存放</text>
       </view>
       <text class="section-more" bindtap="onViewAllItems">查看全部 ›</text>
@@ -108,7 +92,7 @@
       <view class="item-card" wx:for="{{recentItems}}" wx:key="id" bindtap="onItemClick" data-id="{{item.id}}">
         <image wx:if="{{item.photo_path}}" class="item-image" src="{{item.photo_path}}" mode="aspectFill" />
         <view wx:else class="item-image item-image-placeholder">
-          <image class="item-placeholder-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+          <image class="item-placeholder-icon" src="{{item.category_icon || '../../assets/icons/map-pin.svg'}}" mode="aspectFit" />
         </view>
         <view class="item-info">
           <view class="item-name">{{item.name}}</view>

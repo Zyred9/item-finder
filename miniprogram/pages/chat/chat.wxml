@@ -66,11 +66,13 @@
               >
                 <image wx:if="{{mi.photo_path}}" class="result-image" src="{{mi.photo_path}}" mode="aspectFill" />
                 <view wx:else class="result-image result-image-placeholder">
-                  <image class="result-placeholder-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+                  <image class="result-placeholder-icon" src="{{mi.category_icon || '../../assets/icons/map-pin.svg'}}" mode="aspectFit" />
                 </view>
                 <view class="result-info">
                   <view class="result-name-row">
                     <view class="result-name">{{mi.name}}</view>
+                    <view wx:if="{{mi.expiry_status === 'expired'}}" class="expiry-tag expired">{{mi.expiry_label}}</view>
+                    <view wx:elif="{{mi.expiry_status === 'expiring'}}" class="expiry-tag expiring">{{mi.expiry_label}}</view>
                   </view>
                   <view class="result-location">📍 {{mi.location}}</view>
                   <view class="result-meta" wx:if="{{mi.creator_name || mi.created_at}}">

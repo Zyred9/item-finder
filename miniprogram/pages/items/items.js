@@ -79,11 +79,34 @@ Page({
   },
 
   formatItems(list) {
-    return (list || []).map((item) => ({
-      ...item,
-      photo_path: api.resolveStaticUrl(item.photo_path),
-      created_at: item.created_at ? util.formatTime(item.created_at) : ''
-    }))
+    return (list || []).map((item) => {
+      const formatted = {
+        ...item,
+        photo_path: api.resolveStaticUrl(item.photo_path),
+        created_at: item.created_at ? util.formatTime(item.created_at) : ''
+      }
+      
+      // 添加过期状态标签
+      if (item.extension && item.extension.expire_date) {
+        const expireDate = new Date(item.extension.expire_date)
+        const today = new Date()
+        const diffTime = expireDate - today
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        
+        if (diffDays < 0) {
+          // 已过期
+          formatted.expiry_status = 'expired'
+          formatted.expiry_label = `已过期${-diffDays}天`
+        } else if (diffDays <= 30) {
+          // 临期（30 天内）
+          formatted.expiry_status = 'expiring'
+          formatted.expiry_label = `临期${diffDays}天`
+        }
+        // 正常的超过 30 天，不添加标签
+      }
+      
+      return formatted
+    })
   },
 
   onItemTap(e) {

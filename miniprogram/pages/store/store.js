@@ -343,7 +343,7 @@ Page({
       if (text) {
         const updates = { extensionVoiceText: text, showExtensionVoiceResult: true }
         if (result.entities) {
-          const extKeys = ['expire_date', 'production_date', 'shelf_life_days', 'open_date', 'open_shelf_life', 'warranty_date']
+          const extKeys = ['expire_date', 'production_date', 'shelf_life_days', 'warranty_date']
           const entityExt = {}
           extKeys.forEach((k) => {
             if (result.entities[k] !== undefined && result.entities[k] !== null && result.entities[k] !== '') {
@@ -408,7 +408,7 @@ Page({
             updates.suggestedCategoryName = categoryName
             toastTitle = '已识别，含分类建议'
           }
-          const extKeys = ['expire_date', 'production_date', 'shelf_life_days', 'open_date', 'open_shelf_life', 'warranty_date']
+          const extKeys = ['expire_date', 'production_date', 'shelf_life_days', 'warranty_date']
           const entityExt = {}
           extKeys.forEach((k) => {
             if (e[k] !== undefined && e[k] !== null && e[k] !== '') entityExt[k] = e[k]

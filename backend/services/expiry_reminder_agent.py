@@ -105,46 +105,24 @@ def sync_reminders_for_item(db: Session, item: Item) -> int:
         db.add(r)
         created += 1
 
-    # 2) 开封后过期提醒：open_date + open_shelf_life
-    open_date = getattr(ext, "open_date", None)
-    open_shelf_life = getattr(ext, "open_shelf_life", None)
-    if open_date is not None and open_shelf_life is not None and not has_pending(item.id, "open"):
-        try:
-            open_expire = open_date + timedelta(days=int(open_shelf_life))
-            days_left = (open_expire - today).days
+    # 2) 保修到期提醒：warranty_date
+    warranty_date = getattr(ext, "warranty_date", None)
+    if warranty_date is not None and not has_pending(item.id, "warranty"):
+        days_left = (warranty_date - today).days
+        if days_left >= 0:  # 只创建未来的保修提醒
             level = _level_for_days_left(days_left)
             r = Reminder(
                 family_id=item.family_id,
                 item_id=item.id,
-                type="open",
+                type="warranty",
                 level=level,
-                title=item.name,
-                content=_content_for_days(days_left, "开封后还有"),
-                remind_at=open_expire,
+                title=f"{item.name} 保修到期",
+                content=_content_for_days(days_left, "还有"),
+                remind_at=warranty_date,
                 status="pending",
             )
             db.add(r)
             created += 1
-        except (TypeError, ValueError):
-            pass
-
-    # 3) 保修到期提醒：warranty_date
-    warranty_date = getattr(ext, "warranty_date", None)
-    if warranty_date is not None and warranty_date >= today and not has_pending(item.id, "warranty"):
-        days_left = (warranty_date - today).days
-        level = _level_for_days_left(days_left)
-        r = Reminder(
-            family_id=item.family_id,
-            item_id=item.id,
-            type="warranty",
-            level=level,
-            title=item.name,
-            content=_content_for_days(days_left, "保修还有"),
-            remind_at=warranty_date,
-            status="pending",
-        )
-        db.add(r)
-        created += 1
 
     if created > 0:
         db.commit()

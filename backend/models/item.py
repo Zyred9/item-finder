@@ -1,7 +1,7 @@
 """
 物品模型
 """
-from sqlalchemy import Column, String, Text, Boolean, Integer, DateTime, ForeignKey, Date, BigInteger
+from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, BigInteger, Date
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -12,28 +12,22 @@ class Item(Base):
     """物品表"""
     __tablename__ = "items"
     
-    # 基础信息
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     family_id = Column(BigInteger, ForeignKey("families.id", ondelete="CASCADE"),
-                      nullable=False, index=True, comment="家庭ID")
+                      nullable=False, index=True, comment="家庭 ID")
     creator_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"),
-                       nullable=False, index=True, comment="创建者ID")
-    name = Column(String(100), nullable=False, index=True, comment="物品名称")
+                       nullable=False, index=True, comment="创建者 ID")
+    category_id = Column(BigInteger, ForeignKey("categories.id", ondelete="SET NULL"),
+                        nullable=True, index=True, comment="分类 ID")
+    
+    # 基本信息
+    name = Column(String(200), nullable=False, comment="物品名称")
     location = Column(String(200), nullable=False, comment="存放位置")
     description = Column(Text, comment="描述")
     photo_path = Column(String(500), comment="照片路径")
     
-    # 分类
-    category_id = Column(BigInteger, ForeignKey("categories.id", ondelete="SET NULL"),
-                        nullable=True, index=True, comment="分类ID")
-    
     # 状态
-    status = Column(String(20), default="active", index=True, comment="状态: active/archived/deleted")
-    is_favorite = Column(Boolean, default=False, comment="是否收藏")
-    
-    # 统计
-    find_count = Column(Integer, default=0, comment="查找次数")
-    last_found_at = Column(DateTime, comment="最后查找时间")
+    status = Column(String(20), default="active", index=True, comment="状态：active/archived/deleted")
     
     # 时间戳
     created_at = Column(DateTime, default=datetime.now, index=True, comment="创建时间")
@@ -52,40 +46,20 @@ class Item(Base):
 
 
 class ItemExtension(Base):
-    """物品扩展信息表"""
+    """物品扩展信息表（只保留核心字段）"""
     __tablename__ = "item_extensions"
     
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     item_id = Column(BigInteger, ForeignKey("items.id", ondelete="CASCADE"),
-                    unique=True, nullable=False, index=True, comment="物品ID")
+                    unique=True, nullable=False, index=True, comment="物品 ID")
     
-    # 药品相关
+    # 核心字段：过期相关（食品、药品）
     expire_date = Column(Date, index=True, comment="过期日期")
     production_date = Column(Date, comment="生产日期")
-    shelf_life_days = Column(Integer, comment="保质期(天)")
-    open_date = Column(Date, comment="开封日期")
-    open_shelf_life = Column(Integer, comment="开封后保质期(天)")
-    dosage = Column(Text, comment="用法用量")
+    shelf_life_days = Column(Integer, comment="保质期 (天)")
     
-    # 证件相关
-    document_number = Column(String(100), comment="证件号码(加密)")
-    issuer = Column(String(200), comment="发证机关")
-    
-    # 电器相关
-    brand = Column(String(100), comment="品牌")
-    model = Column(String(100), comment="型号")
-    purchase_date = Column(Date, comment="购买日期")
+    # 常用字段：电器保修
     warranty_date = Column(Date, index=True, comment="保修到期日")
-    accessories = Column(Text, comment="配件清单(JSON)")
-    
-    # 衣物相关
-    size = Column(String(20), comment="尺码")
-    color = Column(String(50), comment="颜色")
-    season = Column(String(20), comment="季节")
-    material = Column(String(100), comment="材质")
-    
-    # 食品相关
-    storage_condition = Column(String(50), comment="储存条件")
     
     # 时间戳
     created_at = Column(DateTime, default=datetime.now)

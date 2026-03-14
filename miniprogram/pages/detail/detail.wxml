@@ -1,69 +1,138 @@
-<!-- 物品详情页 - 与整体风格统一，底部操作栏固定 -->
+<!-- 物品详情页 - 现代化精致设计 -->
 <view class="detail-page" wx:if="{{!loading && item}}">
   <!-- 可滚动内容区 -->
-  <scroll-view class="detail-scroll" scroll-y>
+  <scroll-view class="detail-scroll" scroll-y show-scrollbar="{{false}}">
+    
+    <!-- 头部：沉浸式图片 + 信息 -->
     <view class="detail-header">
       <view class="detail-photo-wrap" bindtap="onPreviewImage">
         <image wx:if="{{item.photo_path}}" class="detail-photo" src="{{item.photo_path}}" mode="aspectFill" />
         <view wx:else class="detail-photo-placeholder">
-          <image class="detail-photo-icon-img" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
-          <text class="detail-photo-text">暂无照片</text>
+          <image class="detail-placeholder-icon" src="{{categoryIcon || '../../assets/icons/home.svg'}}" mode="aspectFit" />
+          <text class="detail-placeholder-text">暂无照片</text>
+        </view>
+        
+        <!-- 过期标签 - 悬浮展示 -->
+        <view wx:if="{{expiryStatus}}" class="expiry-badge {{expiryStatus}}">
+          <text class="expiry-badge-icon">{{expiryStatus === 'expired' ? '⚠️' : '⏰'}}</text>
+          <text class="expiry-badge-text">{{expiryLabel}}</text>
         </view>
       </view>
-      <view class="detail-title-wrap">
+      
+      <!-- 毛玻璃信息区 -->
+      <view class="detail-header-info">
         <view class="detail-title">{{item.name}}</view>
-        <view class="detail-location">📍 {{item.location}}</view>
-      </view>
-    </view>
-
-    <view class="section">
-      <view class="info-card">
-        <view class="info-card-title">基本信息</view>
-        <view class="info-row">
-          <text class="info-label">物品名称</text>
-          <text class="info-value">{{item.name}}</text>
-        </view>
-        <view class="info-row">
-          <text class="info-label">存放位置</text>
-          <text class="info-value info-value-highlight">{{item.location}}</text>
-        </view>
-        <view class="info-row" wx:if="{{item.description}}">
-          <text class="info-label">描述</text>
-          <text class="info-value info-value-desc">{{item.description}}</text>
-        </view>
-        <view class="info-row" wx:if="{{item.category_name}}">
-          <text class="info-label">分类</text>
-          <text class="info-value">{{item.category_name}}</text>
-        </view>
-        <view class="info-row info-row-last">
-          <text class="info-label">存放人</text>
-          <text class="info-value">{{item.creator_name || '我'}}</text>
-        </view>
-        <view class="info-row info-row-last">
-          <text class="info-label">存放时间</text>
-          <text class="info-value">{{createdAtText}}</text>
+        <view class="detail-location-wrap">
+          <image class="location-icon" src="../../assets/icons/location-pin.svg" mode="aspectFit" />
+          <text class="detail-location">{{item.location}}</text>
         </view>
       </view>
     </view>
 
-    <view class="section" wx:if="{{hasExtensionFields && extensionRows.length > 0}}">
-      <view class="info-card extension-card">
-        <view class="info-card-title">扩展信息</view>
-        <view class="info-row {{index === extensionRows.length - 1 ? 'info-row-last' : ''}}" wx:for="{{extensionRows}}" wx:for-item="row" wx:key="label">
-          <text class="info-label">{{row.label}}</text>
-          <text class="info-value">{{row.value}}</text>
+    <!-- 主要内容区 -->
+    <view class="detail-content">
+      
+      <!-- 快速信息卡 -->
+      <view class="quick-info-card">
+        <view class="quick-info-item">
+          <view class="quick-info-icon">📂</view>
+          <view class="quick-info-content">
+            <text class="quick-info-label">分类</text>
+            <text class="quick-info-value">{{item.category_name || '未分类'}}</text>
+          </view>
+        </view>
+        <view class="quick-info-divider"></view>
+        <view class="quick-info-item">
+          <view class="quick-info-icon">👤</view>
+          <view class="quick-info-content">
+            <text class="quick-info-label">存放人</text>
+            <text class="quick-info-value">{{item.creator_name || '我'}}</text>
+          </view>
+        </view>
+        <view class="quick-info-divider"></view>
+        <view class="quick-info-item">
+          <view class="quick-info-icon">📅</view>
+          <view class="quick-info-content">
+            <text class="quick-info-label">存放时间</text>
+            <text class="quick-info-value">{{createdAtText}}</text>
+          </view>
         </view>
       </view>
+
+      <!-- 基本信息 -->
+      <view class="info-section">
+        <view class="section-header">
+          <text class="section-title">基本信息</text>
+        </view>
+        <view class="info-card">
+          <view class="info-row">
+            <view class="info-label-wrap">
+              <text class="info-label">物品名称</text>
+            </view>
+            <text class="info-value">{{item.name}}</text>
+          </view>
+          <view class="info-row">
+            <view class="info-label-wrap">
+              <text class="info-label">存放位置</text>
+            </view>
+            <view class="info-value info-value-location">
+              <image class="location-dot" src="../../assets/icons/location-dot.svg" mode="aspectFit" />
+              <text>{{item.location}}</text>
+            </view>
+          </view>
+          <view class="info-row" wx:if="{{item.description}}">
+            <view class="info-label-wrap">
+              <text class="info-label">描述</text>
+            </view>
+            <text class="info-value info-value-desc">{{item.description}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 扩展信息（如果有） -->
+      <view class="info-section" wx:if="{{hasExtensionFields && extensionRows.length > 0}}">
+        <view class="section-header">
+          <text class="section-title">扩展信息</text>
+          <text class="section-subtitle">凭证与详情</text>
+        </view>
+        <view class="extension-grid">
+          <view class="extension-item" wx:for="{{extensionRows}}" wx:for-item="row" wx:key="label">
+            <view class="extension-label">{{row.label}}</view>
+            <view class="extension-value">{{row.value}}</view>
+          </view>
+        </view>
+      </view>
+
     </view>
-    <!-- 底部留白，避免最后一块内容被固定栏遮挡 -->
-    <view class="detail-bottom-pad"></view>
+    
+    <!-- 底部安全区 -->
+    <view class="detail-bottom-safe"></view>
   </scroll-view>
 
   <!-- 固定在底部的操作区 -->
-  <view class="action-section-fixed">
-    <button class="btn-primary" bindtap="onEdit">编辑</button>
-    <button class="btn-danger" bindtap="onDelete">删除</button>
+  <view class="action-bar">
+    <view class="action-btn action-btn-edit" bindtap="onEdit">
+      <text class="action-btn-icon">✏️</text>
+      <text class="action-btn-text">编辑</text>
+    </view>
+    <view class="action-btn action-btn-delete" bindtap="onDelete">
+      <text class="action-btn-icon">🗑️</text>
+      <text class="action-btn-text">删除</text>
+    </view>
   </view>
+</view>
+
+<!-- 加载状态 -->
+<view class="loading-state" wx:if="{{loading}}">
+  <view class="loading-spinner"></view>
+  <text class="loading-text">加载中...</text>
+</view>
+
+<!-- 空状态 -->
+<view class="empty-state" wx:elif="{{!loading && !item}}">
+  <image class="empty-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
+  <text class="empty-title">物品不存在</text>
+  <text class="empty-subtitle">该物品可能已被删除或从未存在</text>
 </view>
 
 <view class="loading-wrap" wx:if="{{loading}}">

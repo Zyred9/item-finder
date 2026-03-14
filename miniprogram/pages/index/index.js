@@ -8,7 +8,6 @@ Page({
   data: {
     familyName: '我的家',
     greeting: '你好',
-    searchKeyword: '',
     recentItems: [],
     reminders: [],
     displayReminders: [],
@@ -43,17 +42,6 @@ Page({
     if (hour < 12) return '早上好'
     if (hour < 18) return '下午好'
     return '晚上好'
-  },
-
-  /**
-   * 点击搜索框：进入找物页，有关键词则透传
-   */
-  onSearchTap() {
-    const keyword = (this.data.searchKeyword || '').trim()
-    if (keyword) {
-      getApp().globalData.pendingChatQuery = keyword
-    }
-    wx.switchTab({ url: '/pages/chat/chat' })
   },
 
   /**
@@ -109,7 +97,13 @@ Page({
         const created_at_label = isNaN(d.getTime())
           ? raw.replace('T', ' ').slice(0, 16)
           : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-        return { ...it, photo_path: api.resolveStaticUrl(it.photo_path), created_at_label }
+        const categoryIcon = this.getCategoryIcon(it.category_name)
+        return { 
+          ...it, 
+          photo_path: api.resolveStaticUrl(it.photo_path), 
+          created_at_label,
+          category_icon: categoryIcon
+        }
       })
 
       const itemStats = {
@@ -132,26 +126,6 @@ Page({
       console.error('加载数据失败', err)
       this.setData({ loading: false })
     }
-  },
-
-  /**
-   * 搜索输入
-   */
-  onSearchInput(e) {
-    this.setData({ searchKeyword: e.detail.value })
-  },
-
-  /**
-   * 搜索
-   */
-  onSearch() {
-    const keyword = this.data.searchKeyword.trim()
-    if (!keyword) return
-
-    getApp().globalData.pendingChatQuery = keyword
-    wx.switchTab({
-      url: '/pages/chat/chat'
-    })
   },
 
   /**
@@ -190,6 +164,45 @@ Page({
    */
   onViewAllItems() {
     wx.navigateTo({ url: '/pages/items/items' })
+  },
+
+  /**
+   * 根据分类返回对应的图标路径（支持分类名和分类 code）
+   */
+  getCategoryIcon(categoryNameOrCode) {
+    if (!categoryNameOrCode) {
+      return '/assets/icons/map-pin.svg'
+    }
+    
+    const text = String(categoryNameOrCode).toLowerCase()
+    
+    // 食品饮料类
+    if (text.includes('food') || text.includes('食品') || text.includes('饮料') || text.includes('零食') || text.includes('调味') || text.includes('粮油')) {
+      return '/assets/icons/food.svg'
+    }
+    
+    // 药品健康类
+    if (text.includes('medicine') || text.includes('药') || text.includes('保健') || text.includes('医疗')) {
+      return '/assets/icons/medicine.svg'
+    }
+    
+    // 服饰鞋包类
+    if (text.includes('clothing') || text.includes('衣服') || text.includes('鞋') || text.includes('包') || text.includes('服饰')) {
+      return '/assets/icons/clothing.svg'
+    }
+    
+    // 数码家电类
+    if (text.includes('electronics') || text.includes('电子') || text.includes('数码') || text.includes('家电') || text.includes('手机') || text.includes('电脑')) {
+      return '/assets/icons/electronics.svg'
+    }
+    
+    // 证件文件类
+    if (text.includes('document') || text.includes('证件') || text.includes('文件') || text.includes('卡') || text.includes('票据')) {
+      return '/assets/icons/document.svg'
+    }
+    
+    // 生活用品类（默认）
+    return '/assets/icons/home.svg'
   },
 
   /**

@@ -228,6 +228,7 @@ async def get_item_stats(
 ):
     """获取物品统计信息（总数、临期、已过期）"""
     from models import Item, ItemExtension
+    from sqlalchemy.orm import joinedload
     from datetime import datetime, timedelta
     
     # 总数
@@ -244,8 +245,10 @@ async def get_item_stats(
     expired_count = 0
     expiring_soon_count = 0
     
-    # 查询有过期日期的物品
-    items_with_expire = db.query(Item).join(ItemExtension).filter(
+    # 查询有过期日期的物品（使用 joinedload 加载 extension）
+    items_with_expire = db.query(Item).options(
+        joinedload(Item.extension)
+    ).join(ItemExtension).filter(
         Item.family_id == family_id,
         Item.status == "active",
         ItemExtension.expire_date.isnot(None)
@@ -253,7 +256,12 @@ async def get_item_stats(
     
     for item in items_with_expire:
         try:
-            expire_date = datetime.strptime(item.extension.expire_date, "%Y-%m-%d").date()
+            # expire_date 可能已经是 date 类型，或者是字符串
+            expire_date = item.extension.expire_date
+            if isinstance(expire_date, str):
+                expire_date = datetime.strptime(expire_date, "%Y-%m-%d").date()
+            elif hasattr(expire_date, 'date'):
+                expire_date = expire_date.date()
             if expire_date < today:
                 expired_count += 1
             elif expire_date <= soon_date:
@@ -292,9 +300,11 @@ async def get_family_items(
             description=item.description,
             photo_path=item.photo_path,
             category_id=int(item.category_id) if item.category_id else None,
+            category_name=details.get("category_name"),
             status=item.status,
             created_at=item.created_at,
-            updated_at=item.updated_at
+            updated_at=item.updated_at,
+            extension=details.get("extension")
         ))
 
     return Response(data=ItemListResponse(total=total, items=result))
@@ -330,3 +340,82 @@ async def search_items(
         ))
 
     return Response(data=ItemListResponse(total=len(result), items=result))
+
+
+@router.get("/{item_id}", response_model=Response[ItemResponse])
+async def get_item(
+    item_id: int,
+    user_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取物品详情"""
+    details = ItemService.get_with_details(db, item_id)
+    if not details:
+        raise HTTPException(status_code=404, detail="物品不存在")
+    item = details["item"]
+    return Response(data=ItemResponse(
+        id=int(item.id),
+        family_id=int(item.family_id),
+        creator_id=int(item.creator_id),
+        creator_name=details["creator_name"],
+        name=item.name,
+        location=item.location,
+        description=item.description,
+        photo_path=item.photo_path,
+        category_id=int(item.category_id) if item.category_id else None,
+        category_name=details.get("category_name"),
+        status=item.status,
+        created_at=item.created_at,
+        updated_at=item.updated_at,
+        extension=details.get("extension")
+    ))
+
+
+@router.put("/{item_id}", response_model=Response[ItemResponse])
+async def update_item(
+    item_id: int,
+    request: ItemUpdate,
+    user_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """更新物品信息"""
+    update_data = request.model_dump(exclude_none=True)
+    extension_data = None
+    if "extension" in update_data:
+        ext = update_data.pop("extension")
+        extension_data = {k: v for k, v in ext.items() if v is not None} if ext else None
+
+    item = ItemService.update(db, item_id, extension=extension_data, **update_data)
+    if not item:
+        raise HTTPException(status_code=404, detail="物品不存在")
+
+    details = ItemService.get_with_details(db, item_id)
+    return Response(data=ItemResponse(
+        id=int(item.id),
+        family_id=int(item.family_id),
+        creator_id=int(item.creator_id),
+        creator_name=details["creator_name"] if details else None,
+        name=item.name,
+        location=item.location,
+        description=item.description,
+        photo_path=item.photo_path,
+        category_id=int(item.category_id) if item.category_id else None,
+        category_name=details.get("category_name") if details else None,
+        status=item.status,
+        created_at=item.created_at,
+        updated_at=item.updated_at,
+        extension=details.get("extension") if details else None
+    ))
+
+
+@router.delete("/{item_id}", response_model=Response)
+async def delete_item(
+    item_id: int,
+    user_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """删除物品"""
+    success = ItemService.delete(db, item_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="物品不存在")
+    return Response(message="删除成功")

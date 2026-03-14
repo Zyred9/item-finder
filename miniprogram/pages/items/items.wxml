@@ -38,7 +38,11 @@
           <image class="item-placeholder-icon" src="../../assets/icons/map-pin.svg" mode="aspectFit" />
         </view>
         <view class="item-info">
-          <view class="item-name">{{item.name}}</view>
+          <view class="item-name-row">
+            <view class="item-name">{{item.name}}</view>
+            <view wx:if="{{item.expiry_status === 'expired'}}" class="expiry-tag expired">{{item.expiry_label}}</view>
+            <view wx:elif="{{item.expiry_status === 'expiring'}}" class="expiry-tag expiring">{{item.expiry_label}}</view>
+          </view>
           <view class="item-location">📍 {{item.location}}</view>
           <view class="item-meta">
             <text>{{item.creator_name || '我'}}</text>

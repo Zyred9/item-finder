@@ -271,6 +271,25 @@
   word-break: break-word;
 }
 
+/* 过期标签 - 与全部物品页面样式一致 */
+.expiry-tag {
+  flex-shrink: 0;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.expiry-tag.expired {
+  background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+  color: #fff;
+}
+
+.expiry-tag.expiring {
+  background: linear-gradient(135deg, #ffb347, #ffd48e);
+  color: #fff;
+}
+
 .result-location {
   font-size: 25rpx;
   color: #8f8f8f;

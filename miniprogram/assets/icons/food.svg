@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <defs>
+    <linearGradient id="foodGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff9a56;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff6b5b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <path d="M18 8h1a4 4 0 0 1 0 8h-1" fill="url(#foodGradient)" stroke="url(#foodGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" fill="url(#foodGradient)" stroke="url(#foodGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="6" y1="1" x2="6" y2="4" stroke="url(#foodGradient)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="10" y1="1" x2="10" y2="4" stroke="url(#foodGradient)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="14" y1="1" x2="14" y2="4" stroke="url(#foodGradient)" stroke-width="2" stroke-linecap="round"/>
+</svg>

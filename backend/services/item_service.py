@@ -112,14 +112,21 @@ class ItemService:
     
     @staticmethod
     def delete(db: Session, item_id: int) -> bool:
-        """删除物品"""
+        """删除物品（同时删除相关提醒）"""
         item = ItemService.get_by_id(db, item_id)
         if not item:
             return False
+        
+        from models import Reminder
+        
+        # 先删除相关提醒（确保级联删除）
+        db.query(Reminder).filter(Reminder.item_id == item.id).delete()
+        
         deleted_item_id = int(item.id)
         db.delete(item)
         db.commit()
         ItemService._schedule_search_index_sync(db, deleted_item_id, "delete")
+        
         return True
     
     @staticmethod
@@ -161,17 +168,8 @@ class ItemService:
     
     @staticmethod
     def record_find(db: Session, item_id: int) -> Optional[Item]:
-        """记录查找（增加查找次数）"""
-        item = ItemService.get_by_id(db, item_id)
-        if not item:
-            return None
-        
-        item.find_count += 1
-        item.last_found_at = datetime.now()
-        db.commit()
-        db.refresh(item)
-        
-        return item
+        """记录查找（字段已清理，仅做查找并返回）"""
+        return ItemService.get_by_id(db, item_id)
 
     @staticmethod
     def _schedule_search_index_sync(db: Session, item_id: int, op_type: str) -> None:

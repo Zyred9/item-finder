@@ -29,7 +29,6 @@ class Family(Base):
     items = relationship("Item", back_populates="family", cascade="all, delete-orphan")
     reminders = relationship("Reminder", back_populates="family", cascade="all, delete-orphan")
     chat_messages = relationship("ChatMessage", back_populates="family", cascade="all, delete-orphan")
-    locations = relationship("Location", back_populates="family", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Family {self.name}>"

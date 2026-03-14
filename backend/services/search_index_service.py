@@ -16,24 +16,10 @@ class SearchIndexService:
     """负责构建搜索文档、同步 Qdrant、处理补偿任务"""
 
     EXTENSION_LABELS = {
-        "brand": "品牌",
-        "model": "型号",
-        "color": "颜色",
-        "material": "材质",
-        "storage_condition": "储存条件",
         "expire_date": "过期日期",
         "production_date": "生产日期",
         "shelf_life_days": "保质期天数",
-        "open_date": "开封日期",
-        "open_shelf_life": "开封后保质期天数",
         "warranty_date": "保修到期日",
-        "dosage": "用法用量",
-        "document_number": "证件号码",
-        "issuer": "签发机关",
-        "purchase_date": "购买日期",
-        "accessories": "配件清单",
-        "size": "尺码",
-        "season": "季节",
     }
 
     @staticmethod
