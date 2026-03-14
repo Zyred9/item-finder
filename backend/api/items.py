@@ -220,79 +220,52 @@ async def create_item(
     ))
 
 
-@router.get("/{item_id}", response_model=Response[ItemResponse])
-async def get_item(
-    item_id: int,
+@router.get("/stats", response_model=Response[dict])
+async def get_item_stats(
+    family_id: int,
     user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """获取物品详情"""
-    details = ItemService.get_with_details(db, item_id)
-    if not details:
-        raise HTTPException(status_code=404, detail="物品不存在")
-
-    item = details["item"]
-
-    return Response(data=ItemResponse(
-        id=int(item.id),
-        family_id=int(item.family_id),
-        creator_id=int(item.creator_id),
-        creator_name=details["creator_name"],
-        name=item.name,
-        location=item.location,
-        description=item.description,
-        photo_path=item.photo_path,
-        category_id=int(item.category_id) if item.category_id else None,
-        category_name=details["category_name"],
-        status=item.status,
-        created_at=item.created_at,
-        updated_at=item.updated_at,
-        extension=details["extension"]
-    ))
-
-
-@router.put("/{item_id}", response_model=Response[ItemResponse])
-async def update_item(
-    item_id: int,
-    request: ItemUpdate,
-    user_id: int = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """更新物品"""
-    item = ItemService.update(db, item_id, **request.model_dump(exclude_unset=True))
-    if not item:
-        raise HTTPException(status_code=404, detail="物品不存在")
-
-    details = ItemService.get_with_details(db, item_id)
-
-    return Response(data=ItemResponse(
-        id=int(item.id),
-        family_id=int(item.family_id),
-        creator_id=int(item.creator_id),
-        creator_name=details["creator_name"],
-        name=item.name,
-        location=item.location,
-        description=item.description,
-        photo_path=item.photo_path,
-        category_id=int(item.category_id) if item.category_id else None,
-        status=item.status,
-        created_at=item.created_at,
-        updated_at=item.updated_at
-    ))
-
-
-@router.delete("/{item_id}", response_model=Response)
-async def delete_item(
-    item_id: int,
-    user_id: int = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """删除物品"""
-    success = ItemService.delete(db, item_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="物品不存在")
+    """获取物品统计信息（总数、临期、已过期）"""
+    from models import Item, ItemExtension
+    from datetime import datetime, timedelta
     
-    return Response(message="物品已删除")
+    # 总数
+    total = db.query(Item).filter(
+        Item.family_id == family_id,
+        Item.status == "active"
+    ).count()
+    
+    # 已过期和临期统计
+    today = datetime.now().date()
+    # 临期：未来 2 个月（60 天内）过期
+    soon_date = today + timedelta(days=60)
+    
+    expired_count = 0
+    expiring_soon_count = 0
+    
+    # 查询有过期日期的物品
+    items_with_expire = db.query(Item).join(ItemExtension).filter(
+        Item.family_id == family_id,
+        Item.status == "active",
+        ItemExtension.expire_date.isnot(None)
+    ).all()
+    
+    for item in items_with_expire:
+        try:
+            expire_date = datetime.strptime(item.extension.expire_date, "%Y-%m-%d").date()
+            if expire_date < today:
+                expired_count += 1
+            elif expire_date <= soon_date:
+                expiring_soon_count += 1
+        except Exception:
+            continue
+    
+    return Response(data={
+        "total": total,
+        "expired": expired_count,
+        "expiring_soon": expiring_soon_count
+    })
 
 
 @router.get("", response_model=Response[ItemListResponse])

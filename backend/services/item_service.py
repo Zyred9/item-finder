@@ -40,6 +40,7 @@ class ItemService:
         db.commit()
         db.refresh(item)
         sync_reminders_for_item(db, item)
+        ItemService._schedule_search_index_sync(db, int(item.id), "upsert")
 
         return item
     
@@ -105,6 +106,7 @@ class ItemService:
         db.commit()
         db.refresh(item)
         sync_reminders_for_item(db, item)
+        ItemService._schedule_search_index_sync(db, int(item.id), "upsert")
 
         return item
     
@@ -114,9 +116,10 @@ class ItemService:
         item = ItemService.get_by_id(db, item_id)
         if not item:
             return False
-        
+        deleted_item_id = int(item.id)
         db.delete(item)
         db.commit()
+        ItemService._schedule_search_index_sync(db, deleted_item_id, "delete")
         return True
     
     @staticmethod
@@ -136,7 +139,16 @@ class ItemService:
     @staticmethod
     def search(db: Session, family_id: int, keyword: str,
                limit: int = 20) -> List[Item]:
-        """搜索物品"""
+        """搜索物品（优先语义搜索，失败时回退 MySQL 模糊匹配）"""
+        from services.semantic_search_service import SemanticSearchService
+
+        items, _ = SemanticSearchService.search_items(db, family_id, keyword, limit)
+        return items
+
+    @staticmethod
+    def search_by_keyword(db: Session, family_id: int, keyword: str,
+                          limit: int = 20) -> List[Item]:
+        """MySQL 关键词模糊搜索兜底"""
         return db.query(Item).filter(
             Item.family_id == family_id,
             Item.status == "active",
@@ -160,3 +172,12 @@ class ItemService:
         db.refresh(item)
         
         return item
+
+    @staticmethod
+    def _schedule_search_index_sync(db: Session, item_id: int, op_type: str) -> None:
+        from services.search_index_service import SearchIndexService
+
+        try:
+            SearchIndexService.schedule_sync(db, item_id, op_type)
+        except Exception as err:
+            print(f"[search-index] schedule failed item_id={item_id} op={op_type} error={err}")

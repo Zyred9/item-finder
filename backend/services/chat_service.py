@@ -9,6 +9,7 @@ import json
 from models import ChatMessage, Item
 from services.item_service import ItemService
 from services.llm_service import parse_find_intent
+from services.semantic_search_service import SemanticSearchService
 
 
 class ChatService:
@@ -30,7 +31,7 @@ class ChatService:
     @staticmethod
     async def chat(db: Session, family_id: int, user_id: int, message: str,
                    session_id: Optional[str] = None) -> dict:
-        """处理对话（意图由 DeepSeek 解析，失败时回退到规则）"""
+        """处理对话（优先规则提取，大模型兜底）"""
         if not session_id:
             session_id = ChatService.create_session()
 
@@ -43,19 +44,18 @@ class ChatService:
         )
         db.add(user_msg)
 
-        try:
-            parsed = await parse_find_intent(message)
-            intent, matched_items, reply = ChatService._apply_parsed_intent(
-                db, family_id, parsed
-            )
-            if intent == "unknown":
-                intent, matched_items, reply = ChatService._process_intent(
-                    db, family_id, message
+        intent, matched_items, reply = ChatService._process_intent(
+            db, family_id, message
+        )
+        
+        if intent == "unknown":
+            try:
+                parsed = await parse_find_intent(message)
+                intent, matched_items, reply = ChatService._apply_parsed_intent(
+                    db, family_id, parsed
                 )
-        except Exception:
-            intent, matched_items, reply = ChatService._process_intent(
-                db, family_id, message
-            )
+            except Exception:
+                pass
 
         ai_msg = ChatMessage(
             family_id=family_id,
@@ -84,7 +84,7 @@ class ChatService:
         keyword = (parsed.get("keyword") or "").strip()
 
         if intent == "search" and keyword:
-            items = ItemService.search(db, family_id, keyword, limit=5)
+            items, _ = SemanticSearchService.search_items(db, family_id, keyword, limit=5)
             if items:
                 reply = ChatService._format_search_result(items)
                 return "search", ChatService._items_to_dict(items), reply
@@ -102,7 +102,7 @@ class ChatService:
 
         keyword = ChatService._extract_search_keyword(msg)
         if keyword:
-            items = ItemService.search(db, family_id, keyword, limit=5)
+            items, _ = SemanticSearchService.search_items(db, family_id, keyword, limit=5)
             if items:
                 reply = ChatService._format_search_result(items)
                 return "search", ChatService._items_to_dict(items), reply
@@ -161,7 +161,8 @@ class ChatService:
                 "name": item.name,
                 "location": item.location,
                 "photo_path": item.photo_path,
-                "created_at": item.created_at.isoformat() if item.created_at else None
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+                "score": getattr(item, "semantic_score", None),
             })
         return result
     

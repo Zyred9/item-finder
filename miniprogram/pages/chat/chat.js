@@ -75,6 +75,7 @@ Page({
       this.addMessage('assistant', '你好呀！我是寻物记助手 👋\n\n请先创建或加入家庭后再找我找东西～', {
         suggestions: ['创建家庭', '加入家庭']
       })
+      this.setData({ scrollToView: 'msg-0' })
       if (options.q) {
         this.setData({ inputText: decodeURIComponent(options.q) })
         setTimeout(() => this.sendMessage(), 500)
@@ -100,7 +101,10 @@ Page({
             matchedItems
           }
         })
-        this.setData({ messages })
+        this.setData({ 
+          messages,
+          scrollToView: 'msg-' + (messages.length - 1)
+        })
         this.setChatSessionId(res.session_id || sessionId)
         if (options.q) {
           this.setData({ inputText: decodeURIComponent(options.q) })
@@ -121,6 +125,7 @@ Page({
         '有什么快过期了？'
       ]
     })
+    this.setData({ scrollToView: 'msg-0' })
 
     if (options.q) {
       this.setData({ inputText: decodeURIComponent(options.q) })

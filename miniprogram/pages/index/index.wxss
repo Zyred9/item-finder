@@ -66,10 +66,72 @@ page {
   z-index: 1;
 }
 
+/* 物品统计卡片 */
+.stats-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 32rpx 40rpx;
+  margin: 0 40rpx;
+  margin-top: -40rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 10;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 48rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-value.total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-value.expiring-soon {
+  background: linear-gradient(135deg, #ffb347 0%, #ffcc33 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-value.expired {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+.stat-divider {
+  width: 2rpx;
+  height: 64rpx;
+  background: linear-gradient(180deg, transparent, #e0e0e0, transparent);
+  margin: 0 20rpx;
+}
+
 /* 搜索框 */
 .search-container {
   padding: 0 40rpx;
-  margin-top: -40rpx;
+  margin-top: 32rpx;
   position: relative;
   z-index: 10;
 }

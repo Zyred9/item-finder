@@ -44,6 +44,17 @@ class Settings(BaseSettings):
     # 百炼录音文件识别 ASR：需公网可访问的音频 URL 时使用，填本服务公网地址；本地开发可用 ngrok
     BACKEND_PUBLIC_URL: str = ""
 
+    # 语义搜索：Qdrant + Embedding
+    QDRANT_URL: str = ""
+    QDRANT_API_KEY: str = ""
+    QDRANT_COLLECTION: str = "item_search_index"
+    QDRANT_TIMEOUT_SECONDS: int = 10
+    SEMANTIC_SEARCH_TOP_K: int = 20
+    SEMANTIC_SEARCH_MIN_SCORE: float = 0.2
+    EMBEDDING_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    EMBEDDING_MODEL: str = "text-embedding-v4"
+    EMBEDDING_VECTOR_SIZE: int = 1024
+
     # 微信小程序配置
     WECHAT_APPID: str = ""
     WECHAT_SECRET: str = ""

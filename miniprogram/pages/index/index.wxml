@@ -7,6 +7,24 @@
     <view class="home-title">{{familyName}}</view>
   </view>
 
+  <!-- 物品统计卡片 -->
+  <view class="stats-card">
+    <view class="stat-item">
+      <view class="stat-value total">{{itemStats.total}}</view>
+      <view class="stat-label">总物品</view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <view class="stat-value expiring-soon">{{itemStats.expiringSoon}}</view>
+      <view class="stat-label">临期</view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <view class="stat-value expired">{{itemStats.expired}}</view>
+      <view class="stat-label">已过期</view>
+    </view>
+  </view>
+
   <!-- 搜索框：输入确认带词跳找物，点击右侧语音图标直接进找物 -->
   <view class="search-container">
     <view class="search-box">

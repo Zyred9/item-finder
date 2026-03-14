@@ -11,6 +11,7 @@ from models.base import SessionLocal
 from services import ReminderService
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from tasks.search_sync_worker import run_once as run_search_sync_once
 
 from config.settings import settings
 from models import init_db
@@ -103,6 +104,19 @@ def _job_refresh_reminders():
         db.close()
 
 
+def _job_sync_search_index():
+    """定时补偿 MySQL -> Qdrant 的失败同步任务"""
+    db = SessionLocal()
+    try:
+        count = run_search_sync_once(db=db, limit=20)
+        if count > 0:
+            print(f"[cron] 已处理 {count} 条搜索索引同步任务")
+    except Exception as err:
+        print(f"[cron] 搜索索引补偿失败: {err}")
+    finally:
+        db.close()
+
+
 # 启动事件
 @app.on_event("startup")
 async def startup_event():
@@ -110,8 +124,10 @@ async def startup_event():
     init_db()
     scheduler = BackgroundScheduler()
     scheduler.add_job(_job_refresh_reminders, "cron", hour=0, minute=0)
+    scheduler.add_job(_job_sync_search_index, "interval", seconds=30)
     scheduler.start()
     print("✅ 定时任务已注册：每日 00:00 刷新智能提醒")
+    print("✅ 定时任务已注册：每 30 秒补偿搜索索引任务")
     print(f"✅ {settings.APP_NAME} API 启动成功")
     print(f"📖 API 文档: http://localhost:8000/docs")
 

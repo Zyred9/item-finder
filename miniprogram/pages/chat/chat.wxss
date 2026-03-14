@@ -329,7 +329,7 @@
 }
 
 .messages-bottom-space {
-  height: 28rpx;
+  height: 160rpx;
 }
 
 /* 语音识别结果展示块（与整体布局统一，不参与滚动） */

@@ -233,6 +233,8 @@ module.exports = {
   deleteItem: (itemId) => request(`/items/${itemId}`, 'DELETE'),
   getFamilyItems: (familyId, limit = 20, offset = 0) =>
     request(`/items?family_id=${familyId}&limit=${limit}&offset=${offset}`),
+  getItemStats: (familyId) =>
+    request(`/items/stats?family_id=${familyId}`),
   searchItems: (query, familyId, limit = 20) =>
     request(`/items/search?q=${encodeURIComponent(query)}&family_id=${familyId}&limit=${limit}`),
 

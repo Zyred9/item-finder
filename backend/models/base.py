@@ -120,7 +120,7 @@ def _resolve_fields(code: str):
 
 def init_db():
     """初始化数据库（创建所有表 + 初始化默认数据）"""
-    from models import User, Family, Item, ItemExtension, Category, Location, Reminder, ChatMessage, Feedback
+    from models import User, Family, Item, ItemExtension, Category, Location, Reminder, ChatMessage, Feedback, SearchSyncTask
 
     Base.metadata.create_all(bind=engine)
     print("[OK] Database tables created")

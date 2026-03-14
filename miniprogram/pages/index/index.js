@@ -14,6 +14,11 @@ Page({
     displayReminders: [],
     urgentCount: 0,
     warningCount: 0,
+    itemStats: {
+      total: 0,
+      expiringSoon: 0,
+      expired: 0
+    },
     loading: true,
     refreshing: false
   },
@@ -83,10 +88,11 @@ Page({
       const familyId = api.getFamilyId()
       
       // 并行加载
-      const [itemsData, remindersData, familyData] = await Promise.all([
+      const [itemsData, remindersData, familyData, statsData] = await Promise.all([
         api.getFamilyItems(familyId, 10),
         api.getReminders(familyId, 'pending'),
-        api.getFamily(familyId)
+        api.getFamily(familyId),
+        api.getItemStats(familyId)
       ])
 
       const rawReminders = remindersData.reminders || []
@@ -106,12 +112,19 @@ Page({
         return { ...it, photo_path: api.resolveStaticUrl(it.photo_path), created_at_label }
       })
 
+      const itemStats = {
+        total: statsData.total || 0,
+        expiringSoon: statsData.expiring_soon || 0,
+        expired: statsData.expired || 0
+      }
+
       this.setData({
         recentItems,
         reminders,
         displayReminders,
         urgentCount: remindersData.urgent_count || 0,
         warningCount: remindersData.warning_count || 0,
+        itemStats,
         familyName: familyData.name || '我的家',
         loading: false
       })
