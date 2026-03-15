@@ -19,6 +19,10 @@ Page({
     // 编辑模式
     editItemId: '',
     
+    // 名称长度警告状态
+    nameLengthWarn: false,
+    nameLengthError: false,
+    
     // 表单数据
     formData: {
       name: '',
@@ -61,8 +65,12 @@ Page({
   },
 
   async onLoad(options) {
+    console.log('[store] onLoad options:', options)
+    
     await this.loadCategories()
     const id = options.id
+    console.log('[store] 编辑物品 ID:', id)
+    
     if (id) {
       this.setData({ editItemId: id })
       await this.loadItemForEdit(id)
@@ -85,9 +93,13 @@ Page({
    * 编辑模式：拉取物品并回填表单
    */
   async loadItemForEdit(itemId) {
+    console.log('[store] loadItemForEdit, itemId:', itemId)
+    
     try {
       wx.showLoading({ title: '加载中...' })
       const item = await api.getItem(itemId)
+      console.log('[store] 加载到的物品:', item)
+      
       wx.hideLoading()
       if (!item) {
         wx.showToast({ title: '物品不存在', icon: 'none' })
@@ -129,8 +141,24 @@ Page({
   /**
    * 输入物品名
    */
+  /**
+   * 输入物品名称（限制 13 个字以内）
+   */
   onNameInput(e) {
-    this.setData({ 'formData.name': e.detail.value })
+    let value = e.detail.value
+    // 限制最多 13 个字
+    if (value.length > 13) {
+      value = value.substring(0, 13)
+      wx.showToast({
+        title: '最多 13 个字',
+        icon: 'none'
+      })
+    }
+    this.setData({ 
+      'formData.name': value,
+      nameLengthWarn: value.length > 10,
+      nameLengthError: value.length > 13
+    })
   },
 
   /**
@@ -504,6 +532,10 @@ Page({
     }
     if (!formData.name.trim()) {
       wx.showToast({ title: '请输入物品名', icon: 'none' })
+      return
+    }
+    if (formData.name.length > 13) {
+      wx.showToast({ title: '物品名不能超过 13 个字', icon: 'none' })
       return
     }
     if (!formData.location.trim()) {

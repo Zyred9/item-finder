@@ -3,10 +3,12 @@
 FastAPI + MySQL + SQLAlchemy
 """
 import time
+from pathlib import Path
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from models.base import init_db
 from config.settings import settings
@@ -27,6 +29,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 挂载静态文件服务（图片上传目录）
+upload_dir = Path(settings.UPLOAD_DIR)
+upload_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
 # 注册路由（所有接口统一加 /api 前缀）
 app.include_router(auth.router, prefix="/api")

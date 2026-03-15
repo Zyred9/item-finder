@@ -3,7 +3,7 @@
  * - 模拟器（小程序在电脑上跑）：用 127.0.0.1
  * - 真机调试/真机预览（小程序在手机上跑）：填电脑的局域网 IP，并确保电脑防火墙放行 8000 端口
  */
-const API_HOST = '192.168.0.7' // 真机调试时填电脑局域网 IP，如 '192.168.0.7'，模拟器留空
+const API_HOST = '' // 真机调试时填电脑局域网 IP，如 '192.168.0.7'，模拟器留空
 const API_ORIGIN = API_HOST ? `http://${API_HOST}:8000` : 'http://127.0.0.1:8000'
 const API_BASE_URL = `${API_ORIGIN}/api`
 console.log('[api] API_BASE_URL =', API_BASE_URL)

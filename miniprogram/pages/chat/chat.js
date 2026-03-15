@@ -85,13 +85,18 @@ Page({
 
     try {
       const res = await api.getChatHistory(familyId, sessionId, 50)
+      console.log('[chat] 历史记录响应:', res)
+      
       const list = (res && res.messages) || []
       if (list.length > 0) {
         const messages = list.map(m => {
+          console.log('[chat] 单条消息:', m)
           const matchedItems = normalizeMatchedItems(
             (m.matched_items && (Array.isArray(m.matched_items) ? m.matched_items : [])) || [],
             api.resolveStaticUrl
           )
+          console.log('[chat] 标准化后的物品:', matchedItems)
+          
           return {
             id: m.id,
             role: m.role,

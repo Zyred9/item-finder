@@ -39,6 +39,19 @@ Page({
         return
       }
       
+      // 处理图片路径：如果是本地路径，转换为服务器 URL
+      if (item.photo_path) {
+        // 检查是否是本地磁盘路径（Windows 或 Unix）
+        if (item.photo_path.startsWith('C:\\') || 
+            item.photo_path.startsWith('/') && !item.photo_path.startsWith('/uploads')) {
+          // 提取文件名，构建正确的 URL
+          const filename = item.photo_path.split(/[\\/]/).pop()
+          item.photo_path = `/uploads/photos/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/${filename}`
+        }
+        // 转换为完整 URL
+        item.photo_path = api.resolveStaticUrl(item.photo_path)
+      }
+      
       // 处理扩展信息
       const extension = item.extension || {}
       const extensionRows = []
@@ -178,6 +191,87 @@ Page({
     
     // 生活用品类（默认）
     return '/assets/icons/home.svg'
+  },
+
+  /**
+   * 编辑物品
+   */
+  onEdit() {
+    const itemId = this.data.item.id
+    console.log('[detail] 点击编辑，物品 ID:', itemId)
+    
+    if (!itemId) {
+      wx.showToast({
+        title: '物品 ID 无效',
+        icon: 'none'
+      })
+      return
+    }
+    
+    const that = this
+    // 跳转到专门的编辑页面
+    wx.navigateTo({
+      url: `/pages/edit-item/edit-item?id=${itemId}`,
+      events: {
+        // 监听编辑页面的刷新事件
+        refreshItem: function(data) {
+          console.log('[detail] 收到刷新事件，重新加载物品数据:', data)
+          // 重新加载物品数据
+          that.loadItem(itemId)
+        }
+      },
+      success: function(res) {
+        // 保存 eventChannel 实例，用于后续通信
+        that.eventChannel = res.eventChannel
+      },
+      fail: (err) => {
+        console.error('[detail] 跳转编辑页面失败:', err)
+        wx.showToast({
+          title: '跳转失败',
+          icon: 'none'
+        })
+      }
+    })
+  },
+
+  /**
+   * 删除物品
+   */
+  async onDelete() {
+    const itemId = this.data.item.id
+    const itemName = this.data.item.name
+    
+    wx.showModal({
+      title: '确认删除',
+      content: `确定要删除「${itemName}」吗？删除后无法恢复，关联的提醒也会被删除。`,
+      confirmText: '删除',
+      confirmColor: '#ff4d4f',
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '删除中...' })
+          
+          try {
+            await api.deleteItem(itemId)
+            wx.hideLoading()
+            wx.showToast({
+              title: '删除成功',
+              icon: 'success'
+            })
+            // 返回上一页
+            setTimeout(() => {
+              wx.navigateBack()
+            }, 1500)
+          } catch (err) {
+            wx.hideLoading()
+            console.error('删除失败', err)
+            wx.showToast({
+              title: err.message || '删除失败',
+              icon: 'none'
+            })
+          }
+        }
+      }
+    })
   },
 
   onShareAppMessage() {

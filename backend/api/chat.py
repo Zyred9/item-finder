@@ -56,7 +56,10 @@ async def get_chat_history(
     user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """获取对话历史"""
+    """获取对话历史（包含完整的物品信息）"""
+    from sqlalchemy.orm import joinedload
+    from models import Item
+    
     messages = ChatService.get_history(db, family_id, session_id, limit)
 
     result = []
@@ -67,9 +70,19 @@ async def get_chat_history(
                 ids = json.loads(m.matched_items)
                 ids = [int(x) for x in ids] if ids else []
                 if ids:
-                    items = ItemService.get_by_ids(db, ids)
-                    matched_items = ChatService._items_to_dict(items)
-            except (json.JSONDecodeError, TypeError, ValueError):
+                    # 使用 joinedload 加载 extension 和 category
+                    items = db.query(Item).options(
+                        joinedload(Item.extension),
+                        joinedload(Item.category)
+                    ).filter(Item.id.in_(ids)).all()
+                    
+                    # 按 ID 顺序排序
+                    id_order = {id: i for i, id in enumerate(ids)}
+                    items.sort(key=lambda x: id_order.get(int(x.id), 999))
+                    
+                    matched_items = ChatService._items_to_dict(db, items)
+            except (json.JSONDecodeError, TypeError, ValueError) as e:
+                print(f"[chat/history] 解析 matched_items 失败：{e}")
                 pass
         result.append(ChatMessageResponse(
             id=int(m.id),

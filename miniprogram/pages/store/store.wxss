@@ -270,6 +270,22 @@
   color: #ff6b5b;
 }
 
+.form-input-count {
+  display: block;
+  text-align: right;
+  font-size: 22rpx;
+  color: #ccc;
+  margin-top: 8rpx;
+}
+
+.form-input-count.warn {
+  color: #ff9800;
+}
+
+.form-input-count.error {
+  color: #ff4d4f;
+}
+
 .category-suggestion {
   margin-top: 12rpx;
   font-size: 24rpx;

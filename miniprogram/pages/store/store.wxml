@@ -77,8 +77,10 @@
           placeholder="如：吹风机、护照、钥匙"
           placeholder-class="form-placeholder"
           value="{{formData.name}}"
+          maxlength="13"
           bindinput="onNameInput"
         />
+        <text class="form-input-count {{nameLengthError ? 'error' : (nameLengthWarn ? 'warn' : '')}}">{{formData.name.length}}/13</text>
       </view>
 
       <view class="form-item">
