@@ -22,13 +22,13 @@ router = APIRouter(prefix="/chat", tags=["对话找物"])
 
 
 def get_current_user(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> int:
-    """获取当前用户ID（整型）"""
+    """获取当前用户 ID（整型）"""
     if not user_id:
         raise HTTPException(status_code=401, detail="未登录")
     try:
         return int(user_id)
     except ValueError:
-        raise HTTPException(status_code=401, detail="无效的用户ID")
+        raise HTTPException(status_code=401, detail="无效的用户 ID")
 
 
 @router.post("", response_model=Response[ChatResponse])
@@ -106,29 +106,45 @@ async def summarize_chat_history(
     user_id: int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """聊天记录压缩总结：拉取当前会话历史，调用 DeepSeek 生成一段总结"""
+    """聊天记录压缩总结：只总结最近 30 条消息，且只保留 AI 消息"""
+    # 获取最近 30 条消息
     messages = ChatService.get_history(
-        db, request.family_id, request.session_id, limit=100
+        db, request.family_id, request.session_id, limit=30
     )
     if not messages:
         return Response(data=SummarizeResponse(summary="暂无对话记录可总结。"))
 
+    # 只保留 AI 消息（assistant），过滤掉所有用户消息
+    ai_messages = [m for m in messages if m.role == 'assistant']
+    
+    if not ai_messages:
+        return Response(data=SummarizeResponse(summary="暂无 AI 回复可总结。"))
+
+    # 构建给 LLM 的消息列表（只包含 AI 的回复）
     llm_messages = [
-        {"role": m.role, "content": m.content or ""}
-        for m in messages
+        {"role": "assistant", "content": m.content or ""}
+        for m in ai_messages
     ]
     try:
         summary = await summarize_chat(llm_messages)
+        # 保存总结内容到数据库
+        ChatService.summarize_and_save(
+            db=db,
+            family_id=request.family_id,
+            user_id=user_id,
+            session_id=request.session_id,
+            summary=summary
+        )
         return Response(data=SummarizeResponse(summary=summary))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=502,
-            detail=f"DeepSeek 请求失败: {e.response.status_code}"
+            detail=f"DeepSeek 请求失败：{e.response.status_code}"
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"总结失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"总结失败：{str(e)}")
 
 
 @router.delete("/history", response_model=Response)
@@ -245,7 +261,7 @@ async def voice_recognize(
             try:
                 result["entities"] = await parse_store_voice_entities(text)
             except Exception as e:
-                logger.warning("store 语音实体抽取失败: %s", e)
+                logger.warning("store 语音实体抽取失败：%s", e)
         return Response(data=result)
     except ValueError as e:
         msg = str(e)
@@ -258,7 +274,7 @@ async def voice_recognize(
             msg = "音频格式无法识别。建议：1）本机安装 ffmpeg 后重启后端再试；2）或用真机预览录音（模拟器格式与真机不同）"
         raise HTTPException(status_code=400, detail=msg)
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=502, detail=f"百炼 ASR 请求失败: {e.response.status_code}")
+        raise HTTPException(status_code=502, detail=f"百炼 ASR 请求失败：{e.response.status_code}")
 
 
 @router.post("/voice/tts", response_model=Response[VoiceTTSResponse])
@@ -289,4 +305,4 @@ async def text_to_speech(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=502, detail=f"TTS 请求失败: {e.response.status_code}")
+        raise HTTPException(status_code=502, detail=f"TTS 请求失败：{e.response.status_code}")

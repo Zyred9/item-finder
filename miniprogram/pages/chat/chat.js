@@ -24,17 +24,11 @@ Page({
     this.loadOrInitSession(options)
   },
 
-  onShow() {
-    this.consumePendingQuery()
-  },
-
   onHide() {
-    this.shouldRecognizeAfterRecord = false
     this.stopRecordingSafely()
   },
 
   onUnload() {
-    this.shouldRecognizeAfterRecord = false
     this.stopRecordingSafely()
   },
 
@@ -157,20 +151,6 @@ Page({
   /**
    * 消费首页透传的搜索词
    */
-  consumePendingQuery() {
-    const app = getApp()
-    const pendingChatQuery = app.globalData.pendingChatQuery
-    if (!pendingChatQuery) {
-      return
-    }
-
-    app.globalData.pendingChatQuery = ''
-    this.setData({
-      inputText: pendingChatQuery
-    })
-    setTimeout(() => this.sendMessage(), 100)
-  },
-
   /**
    * 初始化录音管理器
    */
@@ -201,12 +181,11 @@ Page({
       this.setData({ isRecording: false })
       console.log('录音结束', res)
       const duration = (res.duration || 0) / 1000
-      if (this.shouldRecognizeAfterRecord && res.tempFilePath && duration >= 0.3) {
+      if (res.tempFilePath && duration >= 0.3) {
         this.recognizeVoice(res.tempFilePath)
-      } else if (this.shouldRecognizeAfterRecord && duration > 0 && duration < 0.3) {
+      } else if (duration > 0 && duration < 0.3) {
         wx.showToast({ title: '录音太短', icon: 'none' })
       }
-      this.shouldRecognizeAfterRecord = false
     })
     recorderManager.onError((err) => {
       // #region agent log
@@ -346,15 +325,7 @@ Page({
    * 语音输入 - 开始录音
    */
   onStartRecord() {
-    // #region agent log
-    const _t = Date.now()
-    const _payload = { sessionId: 'fbaaed', location: 'chat.js:onStartRecord', message: 'hold start', data: { step: 'onStartRecord', isRecordingBefore: this.data.isRecording, ts: _t }, timestamp: _t, hypothesisId: 'H1_H3_H5' }
-    console.log('[dbg]', _payload)
-    api.debugLog(_payload)
-    fetch('http://127.0.0.1:7573/ingest/4f348d8d-d0da-4dde-8c9c-877e839fb5ef', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fbaaed' }, body: JSON.stringify(_payload) }).catch(() => {})
-    // #endregion
     this.initRecorderManager()
-    this.shouldRecognizeAfterRecord = true
     this.setData({ isRecording: true })
 
     this.recorderManager.start({
@@ -383,14 +354,6 @@ Page({
    * 语音输入 - 取消录音
    */
   onCancelRecord() {
-    // #region agent log
-    const _t = Date.now()
-    const _payload = { sessionId: 'fbaaed', location: 'chat.js:onCancelRecord', message: 'hold cancel', data: { step: 'onCancelRecord', ts: _t }, timestamp: _t, hypothesisId: 'H1_H5' }
-    console.log('[dbg]', _payload)
-    api.debugLog(_payload)
-    fetch('http://127.0.0.1:7573/ingest/4f348d8d-d0da-4dde-8c9c-877e839fb5ef', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fbaaed' }, body: JSON.stringify(_payload) }).catch(() => {})
-    // #endregion
-    this.shouldRecognizeAfterRecord = false
     this.stopRecordingSafely()
   },
 

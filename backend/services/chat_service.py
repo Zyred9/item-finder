@@ -305,3 +305,19 @@ class ChatService:
         ).delete()
         db.commit()
         return deleted > 0
+    
+    @staticmethod
+    def summarize_and_save(db: Session, family_id: int, user_id: int, 
+                          session_id: str, summary: str) -> None:
+        """保存总结内容到数据库"""
+        # 创建一条特殊的总结消息
+        summary_msg = ChatMessage(
+            family_id=family_id,
+            user_id=user_id,
+            session_id=session_id,
+            role="system",
+            content=summary,
+            intent="summary"
+        )
+        db.add(summary_msg)
+        db.commit()

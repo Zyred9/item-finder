@@ -5,8 +5,7 @@
 App({
   globalData: {
     userInfo: null,
-    familyInfo: null,
-    pendingChatQuery: ''
+    familyInfo: null
   },
 
   onLaunch() {
