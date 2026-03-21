@@ -2,7 +2,6 @@
 分类模型
 """
 from sqlalchemy import Column, String, Integer, Text, DateTime, BigInteger
-from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from .base import Base
@@ -19,9 +18,6 @@ class Category(Base):
     sort_order = Column(Integer, default=0, comment="排序")
     extension_fields = Column(Text, comment="扩展字段配置 (JSON)")
     created_at = Column(DateTime, default=datetime.now)
-    
-    # 关系
-    items = relationship("Item", back_populates="category")
     
     def __repr__(self):
         return f"<Category {self.name}>"

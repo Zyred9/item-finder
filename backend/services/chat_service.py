@@ -6,7 +6,7 @@ from typing import Optional, List
 import uuid
 import json
 
-from models import ChatMessage, Item
+from models import ChatMessage, Item, ItemExtension
 from services.item_service import ItemService
 from services.llm_service import parse_find_intent
 from services.semantic_search_service import SemanticSearchService
@@ -164,16 +164,41 @@ class ChatService:
         if not msg:
             return ""
 
-        # 0. 多个物品枚举：薯片剪刀指甲刀卫生纸（无标点分隔的名词列表）
-        # 特征：8 个字以上，没有明显的疑问词或句子结构
-        if len(msg) >= 6:
-            # 检查是否没有明显的句子结构
+        # 0. 多个物品枚举（优先处理）：牛仔裤呢？双肩包呢？感冒药呢？/ 薯片剪刀指甲刀卫生纸
+        # 特征：包含多个"呢"或问号分隔，或 8 个字以上没有明显句子结构
+        
+        # 检查是否有多个"呢"或问号分隔（多物品查询的典型特征）
+        question_marks = msg.count("?") + msg.count("？")
+        ne_count = msg.count("呢")
+        
+        # 多个"呢"或问号（≥2 个），认为是多物品查询
+        if question_marks >= 2 or ne_count >= 2:
+            # 清理标点和语气词，保留核心物品名
+            clean_msg = msg
+            # 先替换分隔符为空格
+            for sep in ["呢", "?", "？", "，", ",", "、", "啊", "呀", "嘛", "哦", "噢"]:
+                clean_msg = clean_msg.replace(sep, " ")
+            # 清理多余空格
+            clean_msg = " ".join(clean_msg.split())
+            # 如果清理后有内容，返回
+            if clean_msg.strip():
+                return clean_msg.strip()
+        
+        # 检查是否有顿号、逗号分隔的多个物品
+        for pattern in ["、", ",", "，"]:
+            if pattern in msg:
+                # 有分隔符，直接返回原文（语义搜索会处理）
+                return msg.strip()
+        
+        # 无标点分隔的长名词列表：薯片剪刀指甲刀卫生纸
+        if len(msg) >= 8:
+            # 检查是否没有明显的句子结构（排除"呢"，因为"XX 呢"是常见寻物表达）
             has_sentence_structure = any(token in msg for token in [
                 "在哪", "在哪里", "是", "有", "要", "想", "能", "会", "应该",
-                "什么", "怎么", "为什么", "吗", "呢", "吧"
+                "什么", "怎么", "为什么", "吗", "吧"
             ])
             
-            # 如果没有句子结构，且包含多个可能的物品名（按常见物品词分割）
+            # 如果没有句子结构，认为是多物品枚举
             if not has_sentence_structure:
                 # 清理标点符号
                 clean_msg = msg.strip("？?。！!，,、")
@@ -243,12 +268,8 @@ class ChatService:
         """转换为字典（包含 extension 和 category_name）"""
         result = []
         for item in items:
-            # 显式加载 extension（如果还没加载）
-            if hasattr(item, 'extension') and item.extension is None:
-                from sqlalchemy.orm import object_session
-                session = object_session(item)
-                if session:
-                    session.refresh(item, ['extension'])
+            # 查询扩展信息
+            extension = db.query(ItemExtension).filter(ItemExtension.item_id == item.id).first()
             
             item_dict = {
                 "id": int(item.id),
@@ -260,12 +281,12 @@ class ChatService:
                 "category_name": getattr(item, "category_name", None),
             }
             # 添加扩展信息（包含过期日期）
-            if hasattr(item, 'extension') and item.extension:
+            if extension:
                 item_dict["extension"] = {
-                    "expire_date": item.extension.expire_date.isoformat() if item.extension.expire_date else None,
-                    "production_date": item.extension.production_date.isoformat() if item.extension.production_date else None,
-                    "shelf_life_days": item.extension.shelf_life_days,
-                    "warranty_date": item.extension.warranty_date.isoformat() if item.extension.warranty_date else None,
+                    "expire_date": extension.expire_date.isoformat() if extension.expire_date else None,
+                    "production_date": extension.production_date.isoformat() if extension.production_date else None,
+                    "shelf_life_days": extension.shelf_life_days,
+                    "warranty_date": extension.warranty_date.isoformat() if extension.warranty_date else None,
                 }
             result.append(item_dict)
         return result

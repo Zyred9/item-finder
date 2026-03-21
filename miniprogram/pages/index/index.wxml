@@ -78,7 +78,7 @@
   <view class="section">
     <view class="section-header">
       <view class="section-title">
-        <image class="section-icon" src="../../assets/icons/clock.svg" mode="aspectFit" />
+        <image class="section-icon" src="../../assets/icons/history.svg" mode="aspectFit" />
         <text>最近存放</text>
       </view>
       <text class="section-more" bindtap="onViewAllItems">查看全部 ›</text>

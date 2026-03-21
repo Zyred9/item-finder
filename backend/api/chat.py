@@ -70,11 +70,8 @@ async def get_chat_history(
                 ids = json.loads(m.matched_items)
                 ids = [int(x) for x in ids] if ids else []
                 if ids:
-                    # 使用 joinedload 加载 extension 和 category
-                    items = db.query(Item).options(
-                        joinedload(Item.extension),
-                        joinedload(Item.category)
-                    ).filter(Item.id.in_(ids)).all()
+                    # 查询 items 并关联 extension 和 category
+                    items = db.query(Item).filter(Item.id.in_(ids)).all()
                     
                     # 按 ID 顺序排序
                     id_order = {id: i for i, id in enumerate(ids)}

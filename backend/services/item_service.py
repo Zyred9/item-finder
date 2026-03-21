@@ -71,11 +71,14 @@ class ItemService:
         if item.category_id:
             category = db.query(Category).filter(Category.id == item.category_id).first()
         
+        # 获取扩展信息
+        extension = db.query(ItemExtension).filter(ItemExtension.item_id == item.id).first()
+        
         return {
             "item": item,
             "creator_name": creator.nickname if creator else None,
             "category_name": category.name if category else None,
-            "extension": item.extension
+            "extension": extension
         }
     
     @staticmethod
@@ -94,10 +97,11 @@ class ItemService:
         # 更新扩展信息（空字符串转 None，避免 MySQL DATE 列报错）
         if extension_data:
             clean_ext = {k: (None if v == '' else v) for k, v in extension_data.items()}
-            if item.extension:
+            extension = db.query(ItemExtension).filter(ItemExtension.item_id == item.id).first()
+            if extension:
                 for key, value in clean_ext.items():
-                    if hasattr(item.extension, key):
-                        setattr(item.extension, key, value)
+                    if hasattr(extension, key):
+                        setattr(extension, key, value)
             else:
                 extension = ItemExtension(item_id=item.id, **clean_ext)
                 db.add(extension)

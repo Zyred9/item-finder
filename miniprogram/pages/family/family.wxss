@@ -82,6 +82,16 @@
 .edit-icon-disabled {
   color: #ccc;
 }
+.delete-icon {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: 32rpx;
+  opacity: 0.7;
+}
+.delete-icon:active {
+  opacity: 1;
+  transform: scale(0.95);
+}
 .empty-section { text-align: center; padding: 100rpx 0; }
 .empty-icon { width: 100rpx; height: 100rpx; }
 .empty-text { display: block; font-size: 30rpx; color: #999; margin-top: 20rpx; }

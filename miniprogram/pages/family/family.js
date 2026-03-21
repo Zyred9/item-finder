@@ -10,7 +10,8 @@ Page({
     inviteCode: '',
     inputCode: '',
     currentUserId: '',
-    editingRemarkUserId: ''
+    editingRemarkUserId: '',
+    isAdmin: false
   },
 
   onShow() {
@@ -27,12 +28,14 @@ Page({
         api.getFamilyMembers(familyId)
       ])
       const currentUserId = api.getUserId()
+      const currentUser = members.find(m => String(m.id) === String(currentUserId))
       this.setData({
         familyInfo: family,
         members: members || [],
         inviteCode: family.invite_code,
         currentUserId: currentUserId || '',
-        editingRemarkUserId: ''
+        editingRemarkUserId: '',
+        isAdmin: currentUser && currentUser.is_admin ? true : false
       })
     } catch (err) {
       console.error('加载失败', err)
@@ -148,6 +151,33 @@ Page({
     wx.setClipboardData({
       data: this.data.inviteCode,
       success: () => wx.showToast({ title: '已复制', icon: 'success' })
+    })
+  },
+
+  async onDeleteMemberTap(e) {
+    const memberId = e.currentTarget.dataset.userId
+    const memberName = e.currentTarget.dataset.userName
+    const familyId = api.getFamilyId()
+
+    if (!memberId || !familyId) return
+
+    wx.showModal({
+      title: '删除成员',
+      content: `确定要删除"${memberName}"吗？删除后该成员将无法访问家庭物品。`,
+      confirmText: '删除',
+      confirmColor: '#FF6B5B',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            await api.removeFamilyMember(familyId, memberId)
+            wx.showToast({ title: '删除成功', icon: 'success' })
+            this.loadData()
+          } catch (err) {
+            console.error('删除失败', err)
+            wx.showToast({ title: err && err.message ? err.message : '删除失败', icon: 'none' })
+          }
+        }
+      }
     })
   }
 })

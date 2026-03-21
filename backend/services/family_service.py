@@ -66,3 +66,46 @@ class FamilyService:
     def get_member_count(db: Session, family_id: int) -> int:
         """获取成员数量"""
         return db.query(User).filter(User.family_id == family_id).count()
+    
+    @staticmethod
+    def remove_member(db: Session, family_id: int, member_id: int, operator_id: int) -> tuple[bool, str]:
+        """
+        删除家庭成员
+        
+        Args:
+            db: 数据库会话
+            family_id: 家庭 ID
+            member_id: 要删除的成员 ID
+            operator_id: 操作者 ID（必须是管理员）
+        
+        Returns:
+            (成功标志，消息)
+        """
+        # 验证操作者是否为管理员
+        operator = db.query(User).filter(User.id == operator_id).first()
+        if not operator or not operator.is_admin:
+            return False, "只有管理员可以删除成员"
+        
+        # 验证成员是否存在
+        member = db.query(User).filter(User.id == member_id).first()
+        if not member:
+            return False, "成员不存在"
+        
+        # 验证成员是否属于该家庭
+        if member.family_id != family_id:
+            return False, "成员不属于该家庭"
+        
+        # 不能删除自己
+        if member.id == operator_id:
+            return False, "不能删除自己"
+        
+        # 不能删除其他管理员
+        if member.is_admin:
+            return False, "不能删除管理员"
+        
+        # 删除成员（将其家庭 ID 置为 NULL）
+        member.family_id = None
+        member.is_admin = False
+        db.commit()
+        
+        return True, "删除成功"

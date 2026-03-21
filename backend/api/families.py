@@ -114,3 +114,24 @@ async def get_family_members(
             for m in members
         ]
     )
+
+
+@router.delete("/{family_id}/members/{member_id}", response_model=Response[dict])
+async def remove_family_member(
+    family_id: int,
+    member_id: int,
+    user_id: int = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """删除家庭成员（仅管理员可用）"""
+    # 验证操作者是否属于该家庭
+    operator = UserService.get_by_id(db, user_id)
+    if not operator or operator.family_id != family_id:
+        raise HTTPException(status_code=403, detail="无权操作该家庭")
+    
+    success, message = FamilyService.remove_member(db, family_id, member_id, user_id)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    
+    return Response(data={"message": message})

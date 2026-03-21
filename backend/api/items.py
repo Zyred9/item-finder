@@ -11,7 +11,7 @@ from datetime import datetime
 
 import httpx
 
-from models import get_db
+from models import get_db, Item, ItemExtension
 from schemas import Response
 from schemas.item import ItemCreate, ItemUpdate, ItemResponse, ItemListResponse
 from services import ItemService, UserService
@@ -228,7 +228,6 @@ async def get_item_stats(
 ):
     """获取物品统计信息（总数、临期、已过期）"""
     from models import Item, ItemExtension
-    from sqlalchemy.orm import joinedload
     from datetime import datetime, timedelta
     
     # 总数
@@ -242,32 +241,25 @@ async def get_item_stats(
     # 临期：未来 2 个月（60 天内）过期
     soon_date = today + timedelta(days=60)
     
-    expired_count = 0
-    expiring_soon_count = 0
-    
-    # 查询有过期日期的物品（使用 joinedload 加载 extension）
-    items_with_expire = db.query(Item).options(
-        joinedload(Item.extension)
-    ).join(ItemExtension).filter(
+    # 直接查询 ItemExtension 表统计
+    expired_count = db.query(ItemExtension).join(
+        Item, ItemExtension.item_id == Item.id
+    ).filter(
         Item.family_id == family_id,
         Item.status == "active",
-        ItemExtension.expire_date.isnot(None)
-    ).all()
+        ItemExtension.expire_date.isnot(None),
+        ItemExtension.expire_date < today
+    ).count()
     
-    for item in items_with_expire:
-        try:
-            # expire_date 可能已经是 date 类型，或者是字符串
-            expire_date = item.extension.expire_date
-            if isinstance(expire_date, str):
-                expire_date = datetime.strptime(expire_date, "%Y-%m-%d").date()
-            elif hasattr(expire_date, 'date'):
-                expire_date = expire_date.date()
-            if expire_date < today:
-                expired_count += 1
-            elif expire_date <= soon_date:
-                expiring_soon_count += 1
-        except Exception:
-            continue
+    expiring_soon_count = db.query(ItemExtension).join(
+        Item, ItemExtension.item_id == Item.id
+    ).filter(
+        Item.family_id == family_id,
+        Item.status == "active",
+        ItemExtension.expire_date.isnot(None),
+        ItemExtension.expire_date >= today,
+        ItemExtension.expire_date <= soon_date
+    ).count()
     
     return Response(data={
         "total": total,

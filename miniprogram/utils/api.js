@@ -125,6 +125,7 @@ module.exports = {
   joinFamily: (inviteCode) => request('/families/join', 'POST', { invite_code: inviteCode }),
   getFamily: (familyId) => request(`/families/${familyId}`),
   getFamilyMembers: (familyId) => request(`/families/${familyId}/members`),
+  removeFamilyMember: (familyId, memberId) => request(`/families/${familyId}/members/${memberId}`, 'DELETE'),
 
   // ========== 用户 ==========
   updateUserRemark: (userId, remark) => request(`/users/${userId}`, 'PATCH', { remark }),

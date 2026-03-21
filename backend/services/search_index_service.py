@@ -77,11 +77,7 @@ class SearchIndexService:
 
     @staticmethod
     def _load_item(db: Session, item_id: int) -> Optional[Item]:
-        return db.query(Item).options(
-            joinedload(Item.extension),
-            joinedload(Item.category),
-            joinedload(Item.creator),
-        ).filter(Item.id == item_id).first()
+        return db.query(Item).filter(Item.id == item_id).first()
 
     @staticmethod
     def ensure_collection() -> None:

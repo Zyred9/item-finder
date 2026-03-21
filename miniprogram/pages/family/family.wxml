@@ -47,6 +47,13 @@
           bindtap="onRemarkEditTap"
           data-user-id="{{item.id}}"
         >✎</text>
+        <text
+          wx:if="{{!item.is_admin && isAdmin}}"
+          class="delete-icon"
+          bindtap="onDeleteMemberTap"
+          data-user-id="{{item.id}}"
+          data-user-name="{{item.remark || item.nickname || '未命名'}}"
+        >🗑</text>
       </view>
     </view>
   </view>

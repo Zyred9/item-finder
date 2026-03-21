@@ -83,16 +83,19 @@ class ReminderService:
         reminder_days = [7, 3, 1, 0]  # 提醒节点
         
         count = 0
-        # 查询有过期日期的物品
-        items = db.query(Item).filter(
-            Item.extension.has(ItemExtension.expire_date.isnot(None))
+        # 查询有过期日期的物品（关联 ItemExtension 表）
+        items = db.query(Item).join(
+            ItemExtension, ItemExtension.item_id == Item.id
+        ).filter(
+            ItemExtension.expire_date.isnot(None)
         ).all()
         
         for item in items:
-            if not item.extension or not item.extension.expire_date:
+            extension = db.query(ItemExtension).filter(ItemExtension.item_id == item.id).first()
+            if not extension or not extension.expire_date:
                 continue
             
-            days_left = (item.extension.expire_date - today).days
+            days_left = (extension.expire_date - today).days
             
             if days_left in reminder_days:
                 # 检查是否已存在提醒
