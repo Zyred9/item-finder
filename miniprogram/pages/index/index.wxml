@@ -1,110 +1,170 @@
-<!-- 首页 - 参考设计原型 v3，使用 scroll-view 保证真机可正常上下滑动 -->
+<!-- 首页 - 现代化 redesign 版本 -->
 <scroll-view scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}" class="page-scroll" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresherRefresh">
-<view class="container">
-  <!-- 头部 -->
-  <view class="home-header">
-    <view class="home-greeting">{{greeting}} 👋</view>
-    <view class="home-title">{{familyName}}</view>
-  </view>
+  <view class="container">
 
-  <!-- 物品统计卡片 -->
-  <view class="stats-card">
-    <view class="stat-item">
-      <view class="stat-value total">{{itemStats.total}}</view>
-      <view class="stat-label">总物品</view>
-    </view>
-    <view class="stat-divider"></view>
-    <view class="stat-item">
-      <view class="stat-value expiring-soon">{{itemStats.expiringSoon}}</view>
-      <view class="stat-label">临期</view>
-    </view>
-    <view class="stat-divider"></view>
-    <view class="stat-item">
-      <view class="stat-value expired">{{itemStats.expired}}</view>
-      <view class="stat-label">已过期</view>
-    </view>
-  </view>
-
-  <!-- 快捷入口 -->
-  <view class="quick-actions">
-    <view class="quick-action store" bindtap="onStoreItem">
-      <view class="action-icon">
-        <image class="action-icon-img" src="../../assets/icons/camera.svg" mode="aspectFit" />
-      </view>
-      <text class="action-label">快速存物</text>
-      <text class="action-desc">拍照 + 语音录入</text>
-    </view>
-    <view class="quick-action chat" bindtap="onFindItem">
-      <view class="action-icon">
-        <image class="action-icon-img" src="../../assets/icons/messages-square.svg" mode="aspectFit" />
-      </view>
-      <text class="action-label">对话找物</text>
-      <text class="action-desc">AI 智能搜索</text>
-    </view>
-  </view>
-
-  <!-- 智能提醒：与最近存放同级别，仅展示离过期时间最近的 3 条 -->
-  <view class="section" wx:if="{{displayReminders.length > 0}}">
-    <view class="section-header">
-      <view class="section-title">
-        <image class="section-icon" src="../../assets/icons/bell.svg" mode="aspectFit" />
-        <text>智能提醒</text>
-        <text class="badge">{{reminders.length}}</text>
-      </view>
-      <text class="section-more" bindtap="onViewAllReminders">查看全部 ›</text>
-    </view>
-
-    <view class="reminder-list">
-      <view class="reminder-card {{item.level}}" wx:for="{{displayReminders}}" wx:key="id">
-        <view class="reminder-header">
-          <view class="reminder-icon">{{item.icon || '📌'}}</view>
-          <view class="reminder-header-text">
-            <text class="reminder-title">{{item.display_title || item.title || item.item_name || '提醒'}}</text>
-            <text class="reminder-expire-date" wx:if="{{item.expire_at_display}}">过期时间：{{item.expire_at_display}}</text>
-          </view>
-          <text class="reminder-time" wx:if="{{item.time_label}}">{{item.time_label}}</text>
+    <!-- 头部区域：问候 + 家庭名称 + 通知 -->
+    <view class="header-section">
+      <view class="header-top">
+        <view class="user-info">
+          <view class="greeting">{{greeting}}</view>
+          <view class="family-name">{{familyName}}</view>
         </view>
-        <view class="reminder-content" wx:if="{{item.display_content || item.content}}">{{item.display_content || item.content}}</view>
-        <!-- <view class="reminder-actions">
-          <button class="reminder-btn primary" data-id="{{item.id}}" data-action="done" bindtap="onHandleReminder">✅ 已处理</button>
-          <button wx:if="{{item.level === 'urgent'}}" class="reminder-btn secondary" data-id="{{item.id}}" data-action="defer" bindtap="onHandleReminder">⏰ 延期</button>
-          <button wx:else class="reminder-btn secondary" data-id="{{item.id}}" data-action="ignore" bindtap="onHandleReminder">❌ 忽略</button>
-        </view> -->
-      </view>
-    </view>
-  </view>
-
-  <!-- 最近存放：与智能提醒同级别 -->
-  <view class="section">
-    <view class="section-header">
-      <view class="section-title">
-        <image class="section-icon" src="../../assets/icons/history.svg" mode="aspectFit" />
-        <text>最近存放</text>
-      </view>
-      <text class="section-more" bindtap="onViewAllItems">查看全部 ›</text>
-    </view>
-
-    <view class="empty-state" wx:if="{{recentItems.length === 0 && !loading}}">
-      <text class="empty-text">还没有物品，去存第一个吧~</text>
-    </view>
-
-    <view class="item-list">
-      <view class="item-card" wx:for="{{recentItems}}" wx:key="id" bindtap="onItemClick" data-id="{{item.id}}">
-        <image wx:if="{{item.photo_path}}" class="item-image" src="{{item.photo_path}}" mode="aspectFill" />
-        <view wx:else class="item-image item-image-placeholder">
-          <image class="item-placeholder-icon" src="{{item.category_icon || '../../assets/icons/map-pin.svg'}}" mode="aspectFit" />
-        </view>
-        <view class="item-info">
-          <view class="item-name">{{item.name}}</view>
-          <view class="item-location">📍 {{item.location}}</view>
-          <view class="item-meta">
-            <text>{{item.creator_name || '我'}}</text>
-            <text class="dot"></text>
-            <text>{{item.created_at_label}}</text>
+        <view class="header-actions">
+          <view class="notification-btn" bindtap="onViewAllReminders">
+            <view class="bell-icon">
+              <image src="../../assets/icons/bell.svg" mode="aspectFit" />
+            </view>
+            <view class="notification-badge" wx:if="{{urgentCount > 0}}">{{urgentCount}}</view>
           </view>
         </view>
       </view>
+
+      <!-- 统计卡片区 - 紧凑一体化设计 -->
+      <view class="stats-card">
+        <view class="stat-cell">
+          <view class="stat-main">{{itemStats.total}}</view>
+          <view class="stat-sub">总物品</view>
+        </view>
+        <view class="stat-cell">
+          <view class="stat-main warning">{{itemStats.expiringSoon}}</view>
+          <view class="stat-sub">临期</view>
+        </view>
+        <view class="stat-cell">
+          <view class="stat-main danger">{{itemStats.expired}}</view>
+          <view class="stat-sub">已过期</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 主要功能区 -->
+    <view class="main-content">
+
+      <!-- 快捷入口 -->
+      <view class="quick-actions-section">
+        <view class="section-title-large">
+          <text>快捷操作</text>
+        </view>
+        <view class="quick-actions">
+          <view class="quick-action primary" bindtap="onStoreItem">
+            <view class="action-bg-decoration"></view>
+            <view class="action-icon-wrapper">
+              <image class="action-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
+            </view>
+            <view class="action-texts">
+              <text class="action-title">快速存物</text>
+              <text class="action-subtitle">拍照 · 语音 · OCR</text>
+            </view>
+            <view class="action-arrow">›</view>
+          </view>
+
+          <view class="quick-action secondary" bindtap="onFindItem">
+            <view class="action-bg-decoration"></view>
+            <view class="action-icon-wrapper">
+              <image class="action-icon" src="../../assets/icons/messages-square.svg" mode="aspectFit" />
+            </view>
+            <view class="action-texts">
+              <text class="action-title">对话找物</text>
+              <text class="action-subtitle">AI 智能助手</text>
+            </view>
+            <view class="action-arrow">›</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 智能提醒 -->
+      <view class="reminders-section" wx:if="{{displayReminders.length > 0}}">
+        <view class="section-header">
+          <view class="section-title">
+            <view class="title-icon-wrapper">
+              <image class="section-icon" src="../../assets/icons/bell.svg" mode="aspectFit" />
+            </view>
+            <text>智能提醒</text>
+            <view class="count-badge">{{reminders.length}}</view>
+          </view>
+          <view class="section-more" bindtap="onViewAllReminders">
+            <text>查看全部</text>
+            <text class="arrow">›</text>
+          </view>
+        </view>
+
+        <view class="reminder-list">
+          <view class="reminder-card {{item.level}}" wx:for="{{displayReminders}}" wx:key="id">
+            <view class="reminder-card-inner">
+              <view class="reminder-status-bar"></view>
+              <view class="reminder-body">
+                <view class="reminder-icon-wrapper">
+                  <text class="reminder-emoji">{{item.icon || '📌'}}</text>
+                </view>
+                <view class="reminder-content-wrapper">
+                  <view class="reminder-title-row">
+                    <text class="reminder-title">{{item.display_title || item.title || item.item_name || '提醒'}}</text>
+                    <view class="reminder-time-badge {{item.level}}">{{item.time_label || '查看'}}</view>
+                  </view>
+                  <view class="reminder-detail-row">
+                    <text class="reminder-expire-date" wx:if="{{item.expire_at_display}}">{{item.expire_at_display}} 过期</text>
+                    <text class="reminder-divider" wx:if="{{item.expire_at_display && item.display_content}}">·</text>
+                    <text class="reminder-location" wx:if="{{item.display_content}}">{{item.display_content}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 最近存放 -->
+      <view class="recent-section">
+        <view class="section-header">
+          <view class="section-title">
+            <view class="title-icon-wrapper">
+              <image class="section-icon" src="../../assets/icons/history.svg" mode="aspectFit" />
+            </view>
+            <text>最近存放</text>
+          </view>
+          <view class="section-more" bindtap="onViewAllItems">
+            <text>查看全部</text>
+            <text class="arrow">›</text>
+          </view>
+        </view>
+
+        <view class="empty-state" wx:if="{{recentItems.length === 0 && !loading}}">
+          <view class="empty-illustration">
+            <view class="empty-box">📦</view>
+          </view>
+          <text class="empty-text">还没有物品，去存第一个吧~</text>
+          <view class="empty-action" bindtap="onStoreItem">
+            <text>立即存物</text>
+          </view>
+        </view>
+
+        <view class="item-list" wx:if="{{recentItems.length > 0}}">
+          <view class="item-card" wx:for="{{recentItems}}" wx:key="id" bindtap="onItemClick" data-id="{{item.id}}">
+            <view class="item-image-wrapper">
+              <image wx:if="{{item.photo_path}}" class="item-image" src="{{item.photo_path}}" mode="aspectFill" />
+              <view wx:else class="item-image-placeholder">
+                <image class="item-placeholder-icon" src="{{item.category_icon || '../../assets/icons/map-pin.svg'}}" mode="aspectFit" />
+              </view>
+              <view class="item-category-tag" wx:if="{{item.category_name}}">{{item.category_name}}</view>
+            </view>
+            <view class="item-info">
+              <view class="item-name">{{item.name}}</view>
+              <view class="item-location-row">
+                <image class="location-icon" src="../../assets/icons/location-dot.svg" mode="aspectFit" />
+                <text class="item-location">{{item.location}}</text>
+              </view>
+              <view class="item-meta">
+                <text class="meta-creator">{{item.creator_name || '我'}}</text>
+                <view class="meta-divider"></view>
+                <text class="meta-time">{{item.created_at_label}}</text>
+              </view>
+            </view>
+            <view class="item-arrow">›</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部留白 -->
+      <view class="bottom-spacer"></view>
     </view>
   </view>
-</view>
 </scroll-view>

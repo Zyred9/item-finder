@@ -29,7 +29,8 @@ Page({
 
   onShow() {
     this.setData({ greeting: this.getGreeting() })
-    if (api.getFamilyId()) {
+    // 避免与 onLoad 重复加载，仅在已有家庭 ID 时刷新数据
+    if (api.getFamilyId() && this.data.familyName !== '我的家') {
       this.loadData()
     }
   },
@@ -91,6 +92,7 @@ Page({
         return da - db
       })
       const displayReminders = sortedByExpiry.slice(0, 3)
+
       const recentItems = (itemsData.items || []).map((it) => {
         const raw = it.created_at || ''
         const d = new Date(raw)
@@ -98,11 +100,14 @@ Page({
           ? raw.replace('T', ' ').slice(0, 16)
           : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
         const categoryIcon = this.getCategoryIcon(it.category_name)
-        return { 
-          ...it, 
-          photo_path: api.resolveStaticUrl(it.photo_path), 
+        // 确保 category_name 存在，用于显示分类标签
+        const categoryName = it.category_name || this.getCategoryNameFromId(it.category_id)
+        return {
+          ...it,
+          photo_path: api.resolveStaticUrl(it.photo_path),
           created_at_label,
-          category_icon: categoryIcon
+          category_icon: categoryIcon,
+          category_name: categoryName
         }
       })
 
@@ -203,6 +208,22 @@ Page({
     
     // 生活用品类（默认）
     return '/assets/icons/home.svg'
+  },
+
+  /**
+   * 根据 category_id 映射分类名称（备用方案）
+   */
+  getCategoryNameFromId(categoryId) {
+    if (categoryId == null) return null
+    const categoryMap = {
+      '1': '食品饮料',
+      '2': '药品健康',
+      '3': '服饰鞋包',
+      '4': '数码家电',
+      '5': '证件文件',
+      '6': '生活用品'
+    }
+    return categoryMap[String(categoryId)] || null
   },
 
   /**
