@@ -39,34 +39,40 @@
     <!-- 主要功能区 -->
     <view class="main-content">
 
-      <!-- 快捷入口 -->
+      <!-- 快捷入口 - 大胆渐变设计 -->
       <view class="quick-actions-section">
-        <view class="section-title-large">
-          <text>快捷操作</text>
+        <view class="section-header-minimal">
+          <text class="section-title-minimal">快捷操作</text>
         </view>
-        <view class="quick-actions">
-          <view class="quick-action primary" bindtap="onStoreItem">
-            <view class="action-bg-decoration"></view>
-            <view class="action-icon-wrapper">
-              <image class="action-icon" src="../../assets/icons/camera.svg" mode="aspectFit" />
+        <view class="quick-actions-row">
+          <!-- 快速存物 - 珊瑚红渐变 -->
+          <view class="action-card-row store-card-row" bindtap="onStoreItem">
+            <view class="card-gradient-bg store-gradient"></view>
+            <view class="card-decoration-circle store-deco-1"></view>
+            <view class="card-decoration-circle store-deco-2"></view>
+            <view class="card-content-layer-row">
+              <view class="icon-container-row">
+                <image class="action-icon-row" src="../../assets/icons/camera.svg" mode="aspectFit" />
+              </view>
+              <view class="text-layer-row">
+                <text class="action-title-row">快速存物</text>
+              </view>
             </view>
-            <view class="action-texts">
-              <text class="action-title">快速存物</text>
-              <text class="action-subtitle">拍照 · 语音 · OCR</text>
-            </view>
-            <view class="action-arrow">›</view>
           </view>
 
-          <view class="quick-action secondary" bindtap="onFindItem">
-            <view class="action-bg-decoration"></view>
-            <view class="action-icon-wrapper">
-              <image class="action-icon" src="../../assets/icons/messages-square.svg" mode="aspectFit" />
+          <!-- 对话找物 - 蓝紫渐变 -->
+          <view class="action-card-row find-card-row" bindtap="onFindItem">
+            <view class="card-gradient-bg find-gradient"></view>
+            <view class="card-decoration-circle find-deco-1"></view>
+            <view class="card-decoration-circle find-deco-2"></view>
+            <view class="card-content-layer-row">
+              <view class="icon-container-row">
+                <image class="action-icon-row" src="../../assets/icons/messages-square.svg" mode="aspectFit" />
+              </view>
+              <view class="text-layer-row">
+                <text class="action-title-row">对话找物</text>
+              </view>
             </view>
-            <view class="action-texts">
-              <text class="action-title">对话找物</text>
-              <text class="action-subtitle">AI 智能助手</text>
-            </view>
-            <view class="action-arrow">›</view>
           </view>
         </view>
       </view>
